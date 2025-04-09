@@ -1,17 +1,23 @@
-from datetime import datetime
+import logging
+import time
+from datetime import datetime, timedelta
 from typing import List
 
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 
-from database import get_db
-from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto
-from measurement.model import Measurement, MeasurementState
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from database import get_db, sessionLocal
+from scheduler import get_scheduler
+from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
+from measurement.model import Measurement, MeasurementState, MeasurementResult
 
 
 class MeasurementService:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
         self.db = db
+        self.scheduler = scheduler
 
     def get_measurement(self, measurement_id: int) -> Measurement:
         query = self.db.query(Measurement).filter(
@@ -29,50 +35,59 @@ class MeasurementService:
         query = (self.db
                  .query(Measurement)
                  .filter(Measurement.deleted_at.is_(None))
-                 .order_by(Measurement.planned_from.asc())
+                 .order_by(Measurement.planned_at.asc())
         )
 
-        entities = query.all()
-        return entities
+        measurements = query.all()
+        return measurements
 
     def create_measurement(self, dto: MeasurementCreateDto) -> Measurement:
         # map DTO to entity
-        entity = Measurement(
+        measurement = Measurement(
             name=dto.name,
-            planned_from=dto.planned_from,
-            planned_to=dto.planned_to,
+            description=dto.description,
+            planned_at=dto.plan_at,
+            ae_delta=dto.ae_delta,
             state=MeasurementState.NEW,
         )
 
-        # validation
-        self.__pre_persist_validation(entity)
+        # TODO validation
 
-        # save entity in database
-        self.db.add(entity)
-        self.db.commit()
-        self.db.refresh(entity)
+        # create
+        measurement = self.__save_measurement(measurement)
 
-        return entity
+        # plan
+        if dto.plan_at is not None:
+            measurement = self.plan_measurement(measurement.id, None, None)
+
+        return measurement
+
+    def create_periodic_measurement(self, dto: MeasurementCreatePeriodicDto) -> List[Measurement]:
+        measurements = []
+
+        # TODO validation
+
+        current_time = dto.planned_from
+        while current_time <= dto.plan_to:
+            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description,
+                                              plan_at=current_time, ae_delta=dto.ae_delta)
+            measurements.append(self.create_measurement(single_dto))
+            current_time += dto.period
+
+        return measurements
 
     def update_measurement(self, measurement_id: int, dto: MeasurementUpdateDto) -> Measurement:
-        old_entity = self.get_measurement(measurement_id)
+        measurement = self.get_measurement(measurement_id)
 
         # map DTO to entity
-        new_entity = old_entity
-        new_entity.name = dto.name
-        new_entity.planned_from = dto.planned_from
-        new_entity.planned_to = dto.planned_to
-        new_entity.state = dto.state
+        measurement.name = dto.name
+        measurement.description = dto.description
 
-        # validation
-        self.__pre_persist_validation(new_entity)
+        # TODO validation
 
         # update entity in database
-        self.db.add(new_entity)
-        self.db.commit()
-        self.db.refresh(new_entity)
-
-        return new_entity
+        measurement = self.__save_measurement(measurement)
+        return measurement
 
     def delete_measurement(self, measurement_id: int):
         query = (self.db
@@ -83,14 +98,144 @@ class MeasurementService:
             )
         )
 
-        entity = query.first()
-        if entity is not None:
-            entity.deleted_at = datetime.now()
-            self.db.add(entity)
-            self.db.commit()
+        measurement: Measurement | None = query.first()
 
-    @staticmethod
-    def __pre_persist_validation(measurement: Measurement):
-        # TODO validation - implement me
-        if measurement.planned_from > measurement.planned_to:
-            raise ValueError("planned_from must be before planned_to")
+        # ignore deleted measurement
+        if measurement is None:
+            return
+
+        # remove run of planned job
+        if measurement.scheduler_job_id is not None:
+            self.scheduler.remove_job(measurement.scheduler_job_id)
+            measurement.scheduler_job_id = None
+
+        # soft delete
+        measurement.deleted_at = datetime.now()
+        self.db.add(measurement)
+        self.db.commit()
+
+    def plan_measurement(
+            self,
+            measurement_id: int,
+            plan_at: datetime | None,
+            ae_delta: timedelta | None
+    ) -> Measurement:
+        measurement = self.get_measurement(measurement_id)
+
+        # override planning attributes if they are sent
+        if plan_at is not None:
+            measurement.planned_at = plan_at
+        if ae_delta is not None:
+            measurement.ae_delta = ae_delta
+
+        # TODO validations overriding measurements by time, measurement in bad state, don't plan at history date ...
+
+        try:
+            # plan measurements via scheduler
+            job = self.scheduler.add_job(
+                func=MeasurementService.proceed_measuring,
+                args=[measurement.id],
+                trigger="date",
+
+                # we shift the start so we can collect AE before capturing images
+                run_date=measurement.planned_at - measurement.ae_delta
+            )
+
+            # change state to planned
+            measurement.state = MeasurementState.PLANNED
+            measurement.scheduler_job_id = job.id
+
+            # save updated measurement
+            measurement = self.__save_measurement(measurement)
+
+            logging.debug(f"Planned execution of measurement at {plan_at}")
+        except Exception as e:
+            logging.error(e)
+            measurement.state = MeasurementState.ERROR
+            measurement = self.__save_measurement(measurement)
+
+        return measurement
+
+    def unplan_measurement(self, measurement_id: int) -> Measurement:
+        measurement = self.get_measurement(measurement_id)
+
+        # TODO validations: bad state, already running, ....
+
+        # change state back to new
+        measurement.state = MeasurementState.NEW
+
+        # remove scheduled job from scheduler
+        self.scheduler.remove_job(measurement.scheduler_job_id)
+
+        # save measurement
+        measurement = self.__save_measurement(measurement)
+        return measurement
+
+    @staticmethod  # must be static due to serialization of job
+    async def proceed_measuring(measurement_id: int):
+        # must have explicitly declared session due to serialization of job
+        db = sessionLocal()
+
+        def change_state(mes: Measurement, state: MeasurementState) -> Measurement:
+            mes.state = state
+            db.add(mes)
+            db.commit()
+            db.refresh(mes)
+
+            return mes
+
+        logging.debug(f"Starting measurement for {measurement_id}")
+        measurement = db.query(Measurement).filter(Measurement.id == measurement_id).first()
+
+        if measurement is None or measurement.state != MeasurementState.PLANNED:
+            logging.warn(f"Missing measurement with id: {measurement_id}")
+            return
+
+        logging.debug(f"Downloading for measurement {measurement_id}")
+        measurement.started_at = datetime.now()
+        measurement = change_state(measurement, MeasurementState.DOWNLOADING)
+
+        # TODO replace time.sleep by multi-threading implementation, start measuring async and after that join threads
+        # and collect all results
+        try:
+            # TODO turn on acoustic emission
+            time.sleep(measurement.ae_delta.seconds)
+            # TODO start capturing via multi-spectral camera
+            # TODO capture image via RGB camera
+            time.sleep(measurement.ae_delta.seconds)
+            # TODO stop acoustic emission
+            # TODO stop multi-spectral camera
+            # TODO collect data from acoustic emission
+            # TODO collect data from multi-spectral camera
+
+            logging.debug(f"Zipping measurement {measurement_id}")
+            time.sleep(3)
+            measurement = change_state(measurement, MeasurementState.ZIPPING)
+            # TODO zip data together
+
+            logging.debug(f"Uploading measurement {measurement_id}")
+            time.sleep(3)
+            measurement = change_state(measurement, MeasurementState.UPLOADING)
+            # TODO upload data to cloud
+
+            # TODO use actual result and actual cloud URL
+            logging.debug(f"Finishing measurement {measurement_id}")
+            measurement.result = MeasurementResult(
+                cloud_url="https://www.icegif.com/wp-content/uploads/2023/01/icegif-162.gif",
+                measurement_id=measurement_id
+            )
+            measurement.finished_at = datetime.now()
+            measurement = change_state(measurement, MeasurementState.FINISHED)
+        except Exception as e:
+            logging.error(e)
+            measurement.result = MeasurementResult(error=str(e), measurement_id=measurement_id)
+            change_state(measurement, MeasurementState.ERROR)
+        finally:
+            db.close()
+
+    def __save_measurement(self, measurement: Measurement) -> Measurement:
+        self.db.add(measurement)
+        self.db.commit()
+        self.db.refresh(measurement)
+
+        return measurement

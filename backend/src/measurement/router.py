@@ -1,7 +1,8 @@
 from typing import List
 from fastapi import APIRouter, status, Depends
 
-from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto
+from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto, \
+    MeasurementCreatePeriodicDto, MeasurementPlanDto
 from measurement.service import MeasurementService
 
 router = APIRouter(
@@ -33,6 +34,14 @@ async def create_measurement(
     return service.create_measurement(dto)
 
 
+@router.post("/periodic", status_code=status.HTTP_201_CREATED)
+async def create_periodic_measurement(
+        dto: MeasurementCreatePeriodicDto,
+        service: MeasurementService = Depends(MeasurementService)
+) -> list[MeasurementListDto]:
+    return service.create_periodic_measurement(dto)
+
+
 @router.put("/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def update_measurement(
         id: int,
@@ -43,8 +52,18 @@ async def update_measurement(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_measurement(id, service: MeasurementService = Depends(MeasurementService)):
+async def delete_measurement(id: int, service: MeasurementService = Depends(MeasurementService)):
     service.delete_measurement(id)
+
+
+@router.post("/{id}/plan", status_code=status.HTTP_200_OK)
+async def plan_measurement(id: int, dto: MeasurementPlanDto, service: MeasurementService = Depends(MeasurementService)):
+    service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
+
+
+@router.delete("/{id}/plan", status_code=status.HTTP_200_OK)
+async def unplan_measurement(id: int, service: MeasurementService = Depends(MeasurementService)):
+    service.unplan_measurement(id)
 
 # TODO exception handling (handle errors that are thrown in service layer)
 #  see https://fastapi.tiangolo.com/tutorial/handling-errors/#install-custom-exception-handlers
