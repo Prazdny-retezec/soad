@@ -8,6 +8,8 @@ from fastapi import Depends, HTTPException
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from common.enum import ImageFormat
+from controller.rgb_camera import RgbCameraController
 from database import get_db, sessionLocal
 from scheduler import get_scheduler
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
@@ -200,8 +202,13 @@ class MeasurementService:
         try:
             # TODO turn on acoustic emission
             time.sleep(measurement.ae_delta.seconds)
+
             # TODO start capturing via multi-spectral camera
-            # TODO capture image via RGB camera
+
+            # RGB camera capture
+            with RgbCameraController(1920, 1080) as rgb_camera:
+                rgb_camera.capture_image("/data/img", 90, ImageFormat.PNG)
+
             time.sleep(measurement.ae_delta.seconds)
             # TODO stop acoustic emission
             # TODO stop multi-spectral camera
