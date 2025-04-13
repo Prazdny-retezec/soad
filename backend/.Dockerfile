@@ -1,4 +1,5 @@
-FROM python:3.12-alpine
+# cannot use ALPINE due to Pypylon library
+FROM python:3.13
 
 EXPOSE 80
 WORKDIR /src
