@@ -6,8 +6,7 @@ from measurement.router import router as measurement_router
 from database import Base, engine
 from scheduler import scheduler
 from settings import AppSettings
-
-# BE application instance
+from fastapi.middleware.cors import CORSMiddleware
 
 description = """
 Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat. 🚀
@@ -30,6 +29,8 @@ You will be able to:
 
 * **Login** (_not implemented_).
 """
+
+# BE application instance
 app = FastAPI(
     title="Soad",
     description=description,
@@ -43,6 +44,19 @@ app = FastAPI(
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
     },)
+
+# CORS
+origins = [
+    "http://localhost:5000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # registration of routers
 app.include_router(measurement_router)

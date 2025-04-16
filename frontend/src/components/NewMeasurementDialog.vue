@@ -2,28 +2,20 @@
   <v-dialog v-model="dialog" max-width="700" variant="outlined">
     <template v-slot:activator="{ props: activatorProps }">
       <div v-bind="activatorProps">
-        <span v-if="type === 'schedule'">Schedule</span>
-        <span v-else>Right now</span>
+        <span v-if="type === 'schedule'">Periodic Schedule</span>
+        <span v-else>One time measurement</span>
       </div>
     </template>
 
     <template v-slot:default="{ isActive }">
-      <v-card
-        v-if="type === 'schedule'"
-        title="Schedule measurement"
-        rounded="xl"
-      >
+      <!-- PERIODIC SCHEDULING -->
+      <v-card v-if="type === 'schedule'" title="Schedule measurement" rounded="xl">
         <div>
-          <v-icon
-            @click="closeDialog()"
-            style="position: absolute; top: 20px; right: 20px"
-            >mdi mdi-close</v-icon
-          >
+          <v-icon @click="closeDialog()" style="position: absolute; top: 20px; right: 20px">mdi mdi-close</v-icon>
         </div>
 
-        <v-card-text class="subtitle text-dark-green"
-          >Select type of measurement</v-card-text
-        >
+        <v-card-text class="subtitle text-dark-green">Select type of measurement</v-card-text>
+
         <v-row justify="center">
           <v-select
             style="max-width: 80%"
@@ -37,16 +29,9 @@
           ></v-select>
         </v-row>
 
-        <!-- Date and time pickers -->
         <v-row justify="center">
-          <v-time-picker
-            class="text-dark-green"
-            v-model="selectedTime"
-            format="24hr"
-            scrollable
-            title="Select date and time"
-          ></v-time-picker>
-          <v-date-picker title="" v-model="selectedDate"></v-date-picker>
+          <v-time-picker class="text-dark-green" v-model="selectedTime" format="24hr" scrollable />
+          <v-date-picker v-model="selectedDate" />
         </v-row>
 
         <v-row justify="center" class="mb-2">
@@ -60,85 +45,92 @@
           ></v-alert>
         </v-row>
 
-        <!-- Button to schedule measurement -->
         <v-card-actions class="justify-center">
-          <v-btn
-            @click="scheduleMeasurement()"
-            color="white"
-            rounded="xl"
-            class="bg-dark-green mb-2"
-            style="width: 300px"
-          >
+          <v-btn @click="scheduleMeasurement()" color="white" rounded="xl" class="bg-dark-green mb-2" style="width: 300px">
             Schedule measurement
           </v-btn>
         </v-card-actions>
       </v-card>
 
-      <v-card v-else title="Start measurement now" rounded="xl">
+      <!-- ONE-TIME MEASUREMENT -->
+      <v-card v-else title="Start one-time measurement" rounded="xl">
         <div>
-          <v-icon
-            @click="closeDialog()"
-            style="position: absolute; top: 20px; right: 20px"
-            >mdi mdi-close</v-icon
-          >
+          <v-icon @click="closeDialog()" style="position: absolute; top: 20px; right: 20px">mdi mdi-close</v-icon>
         </div>
 
-        <v-col>
-          <v-col>
-            <p class="text-h6">Acoustic emissions</p>
-            <v-divider class="py-2" />
-            <div class="d-flex ga-5">
-              <v-btn
-                color="dark-green"
-                rounded="xl"
-                :disabled="this.measurementStore.recordingMode === 2"
-                @click="startAcousticMeasurement()"
-              >
-                Start
-              </v-btn>
-              <v-btn
-                color="white"
-                rounded="xl"
-                :disabled="this.measurementStore.recordingMode !== 2"
-                @click="pauseAcousticMeasurement()"
-              >
-                Pause
-              </v-btn>
-              <v-btn
-                color="red"
-                rounded="xl"
-                :disabled="this.measurementStore.recordingMode !== 2"
-                @click="stopAcousticMeasurement()"
-              >
-                Stop
-              </v-btn>
-            </div>
-          </v-col>
-          <v-col>
-            <p class="text-h6">RGB camera</p>
-            <v-divider class="py-2" />
-            <div>
-              <v-btn
-                color="dark-green"
-                rounded="xl"
-                @click="startRGBMeasurement()"
-              >
-                Start
-              </v-btn>
-            </div>
-          </v-col>
+        <v-card-text class="subtitle text-dark-green">
+          Select time of measurement. AE starts ± delta around the selected time.
+        </v-card-text>
 
-          <v-row justify="center" class="my-2">
-            <v-alert
-              max-width="80%"
-              v-model="showAlert"
-              closable
-              :title="errorMessage"
-              type="error"
-              variant="tonal"
-            ></v-alert>
-          </v-row>
-        </v-col>
+        <!-- Name & Description -->
+        <v-row justify="center" class="px-4">
+          <v-text-field
+            class="mb-2"
+            v-model="measurementName"
+            label="Measurement Name"
+            variant="outlined"
+          />
+        </v-row>
+        <v-row justify="center" class="px-4">
+          <v-textarea
+            v-model="measurementDescription"
+            label="Description"
+            variant="outlined"
+            auto-grow
+          />
+        </v-row>
+
+        <!-- Date & Time -->
+        <v-row justify="center">
+          <v-time-picker class="text-dark-green" v-model="selectedTime" format="24hr" scrollable />
+          <v-date-picker v-model="selectedDate" />
+        </v-row>
+
+        <!-- Delta -->
+        <v-row justify="center" class="px-4">
+          <v-col cols="6">
+            <v-text-field
+              v-model.number="aeDeltaValue"
+              label="Delta Value"
+              type="number"
+              min="1"
+              variant="outlined"
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-select
+              v-model="aeDeltaUnit"
+              label="Delta Unit"
+              :items="['Seconds', 'Minutes', 'Hours', 'Days']"
+              variant="outlined"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Start Button -->
+        <v-row justify="center">
+          <v-btn
+            color="dark-green"
+            rounded="xl"
+            class="my-4"
+            style="width: 300px"
+            @click="startOneTimeMeasurement"
+          >
+            Start measurement
+          </v-btn>
+        </v-row>
+
+        <!-- Alert -->
+        <v-row justify="center" class="my-2">
+          <v-alert
+            max-width="80%"
+            v-model="showAlert"
+            closable
+            :title="errorMessage"
+            type="error"
+            variant="tonal"
+          ></v-alert>
+        </v-row>
       </v-card>
     </template>
   </v-dialog>
@@ -147,7 +139,7 @@
 <script>
 import { mapStores } from 'pinia';
 import { useMeasurementStore } from '@/store/MeasurementStore';
-import { useModeStore } from "@/store/ModeStore";
+import { useModeStore } from '@/store/ModeStore';
 
 export default {
   name: 'NewMeasurementDialog',
@@ -161,21 +153,25 @@ export default {
       dialog: false,
       selectedDate: null,
       selectedTime: null,
-      panel: null,
+      aeDeltaValue: 3,
+      aeDeltaUnit: 'Minutes',
+      measurementName: '',
+      measurementDescription: '',
       showAlert: false,
-      errorMessage: "Recording failed! Please try again.",
+      errorMessage: 'Invalid measurement setup!',
       rules: {
         required: (value) => !!value || 'Required.',
       },
     };
   },
+
   computed: {
     ...mapStores(useMeasurementStore),
     ...mapStores(useModeStore),
   },
+
   methods: {
     scheduleMeasurement() {
-      //TODO
       if (this.selectedDate && this.selectedTime) {
         this.dialog = false;
         this.showAlert = false;
@@ -186,53 +182,73 @@ export default {
       }
     },
 
-    async startAcousticMeasurement() {
-      await this.measurementStore.startAEMeasurement();
-
+    async startOneTimeMeasurement() {
+      if (!this.selectedDate || !this.selectedTime || !this.aeDeltaValue || !this.aeDeltaUnit || !this.measurementName) {
+        this.showAlert = true;
+        this.errorMessage = 'Please fill in all required fields.';
+        return;
+      }
+    
+      const planAt = new Date(this.selectedDate);
+      const [hours, minutes] = this.selectedTime.split(':');
+      planAt.setHours(parseInt(hours));
+      planAt.setMinutes(parseInt(minutes));
+      planAt.setSeconds(0);
+      planAt.setMilliseconds(0);
+    
+      const unitMap = {
+        Seconds: 1000,
+        Minutes: 60000,
+        Hours: 3600000,
+        Days: 86400000,
+      };
+    
+      const charMap = {
+        Seconds: 'S',
+        Minutes: 'M',
+        Hours: 'H',
+        Days: 'D',
+      };
+    
+      const deltaMs = this.aeDeltaValue * unitMap[this.aeDeltaUnit];
+      const aeStart = new Date(planAt.getTime() - deltaMs);
+      const now = new Date();
+    
+      if (aeStart < now) {
+        this.showAlert = true;
+        this.errorMessage = 'AE start time is in the past! Please select a later plan time or smaller delta.';
+        return;
+      }
+    
+      const aeDelta = `PT${this.aeDeltaValue}${charMap[this.aeDeltaUnit]}`;
+    
+      // Custom date string without timezone (in local time)
+      const formattedPlanAt = `${planAt.getFullYear()}-${String(planAt.getMonth() + 1).padStart(2, '0')}-${String(planAt.getDate()).padStart(2, '0')}T${String(planAt.getHours()).padStart(2, '0')}:${String(planAt.getMinutes()).padStart(2, '0')}:00`;
+    
+      const dto = {
+        name: this.measurementName,
+        description: this.measurementDescription,
+        plan_at: formattedPlanAt, // no Z
+        ae_delta: aeDelta,
+      };
+    
+      const result = await this.measurementStore.createMeasurement(dto);
+    
       if (this.measurementStore.error) {
         this.showAlert = true;
         this.errorMessage = this.measurementStore.error;
-      }
-    },
-
-    async pauseAcousticMeasurement() {
-      await this.measurementStore.pauseAEMeasurement();
-    },
-
-    async stopAcousticMeasurement() {
-      await this.measurementStore.stopAEMeasurement();
-
-      if (this.measurementStore.error) {
-        this.showAlert = true;
-        this.errorMessage = this.measurementStore.error;
-      }
-    },
-
-    async startRGBMeasurement() {
-      // await this.measurementStore.startRGBMeasurement();
-
-      let photosRGB = []
-      if (this.modeStore.mode === 'production') {
-        photosRGB = await this.measurementStore.measureRGB()
       } else {
-        photosRGB = await this.measurementStore.measureTestRGB()
+        this.closeDialog();
       }
-
-      // emit data to parent
-      if (photosRGB?.length > 0) {
-        this.$emit('rgb-photos', photosRGB)
-        this.dialog = false;
-      }
-      if (this.measurementStore.error) {
-        this.showAlert = true;
-        this.errorMessage = this.measurementStore.error;
-      }
-
     },
 
     closeDialog() {
       this.selectedDate = null;
       this.selectedTime = null;
+      this.measurementName = '';
+      this.measurementDescription = '';
+      this.aeDeltaValue = 3;
+      this.aeDeltaUnit = 'Minutes';
       this.dialog = false;
       this.showAlert = false;
     },
