@@ -3,154 +3,90 @@ import axios from 'axios';
 import config from '@/config';
 
 export const useMeasurementStore = defineStore('measurement', {
-  state() {
-    return {
-      error: null,
-      isLoading: false,
-      status: null,
-      recordingMode: null,
-      measurements: [],
-    };
-  },
+  state: () => ({
+    error: null,
+    isLoading: false,
+    measurements: [],
+    measurementDetail: null,
+    recordingMode: null,
+    status: null,
+  }),
 
   actions: {
     async loadAll() {
       try {
         this.isLoading = true;
-        const response = await axios.get(config.backendUrl + '/data/get_data');
+        const response = await axios.get(`${config.backendUrl}/measurement`);
         this.measurements = response.data;
         this.error = null;
-        this.isLoading = false;
-      } catch {
+      } catch (error) {
         this.error = 'Cannot load measurements';
-      }
-    },
-    async startAEMeasurement() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/acoustic/start_rec'
-        );
-        this.recordingMode = response.data.recording_mode;
-        this.status = response.data.status;
-        this.error = null;
+      } finally {
         this.isLoading = false;
-      } catch {
-        this.error = 'Cannot start AE measurement';
-      }
-    },
-    async pauseAEMeasurement() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/acoustic/pause_rec'
-        );
-        this.recordingMode = response.data.recording_mode;
-        this.status = response.data.status;
-        this.error = null;
-        this.isLoading = false;
-      } catch {
-        this.error = 'Cannot pause AE measurement';
-      }
-    },
-    async stopAEMeasurement() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/acoustic/stop_rec'
-        );
-        this.recordingMode = response.data.recording_mode;
-        this.status = response.data.status;
-        this.error = null;
-        this.isLoading = false;
-      } catch {
-        this.error = 'Cannot stop AE measurement';
-      }
-    },
-    async startRGBMeasurement() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/cameras/start_rec' // TODO: change to the correct endpoint, not ready yet
-        );
-        this.error = null;
-        this.isLoading = false;
-      } catch {
-        this.error = 'Cannot start RGB Camera measurement';
       }
     },
 
-    async measureTestRGB() {
+    async getMeasurement(id) {
       try {
         this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/rgb/capturefake'
-        );
-
+        const response = await axios.get(`${config.backendUrl}/measurement/${id}`);
+        this.measurementDetail = response.data;
         this.error = null;
-        this.loginMessage = null;
-        this.isLoading = false;
-
         return response.data;
-      } catch {
+      } catch (error) {
+        this.error = 'Cannot get measurement details';
+      } finally {
         this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
       }
     },
 
-    async measureRGB() {
+    async createMeasurement(dto) {
       try {
         this.isLoading = true;
-        const response = await axios.post(config.backendUrl + '/rgb/capture');
-
+        const response = await axios.post(`${config.backendUrl}/measurement`, dto);
+        // Pridáme vytvorené meranie do lokálneho zoznamu
+        this.measurements.push(response.data);
         this.error = null;
-        this.loginMessage = null;
+        return response.data;
+      } catch (error) {
+        this.error = 'Cannot create measurement';
+      } finally {
         this.isLoading = false;
+      }
+    },
 
-        if (response.data || response.data.length === 0) {
-          this.error =
-            'Cannot measure RGB photos, check the camera connection.';
-          return;
+    async createPeriodicMeasurement(dto) {
+      // TODO: Implement periodic measurement creation logic
+    },
+
+    async updateMeasurement(id, dto) {
+      try {
+        this.isLoading = true;
+        const response = await axios.put(`${config.backendUrl}/measurement/${id}`, dto);
+        this.error = null;
+        // Aktualizujeme meranie v lokálnom zozname
+        const index = this.measurements.findIndex((m) => m.id === id);
+        if (index !== -1) {
+          this.measurements[index] = response.data;
         }
-
         return response.data;
-      } catch {
+      } catch (error) {
+        this.error = 'Cannot update measurement';
+      } finally {
         this.isLoading = false;
-        this.error = 'Cannot measure RGB photos, check the camera connection.';
       }
     },
 
-    async getRGBPhotos() {
-      try {
-        this.isLoading = true;
-        const response = await axios.get(
-          config.backendUrl + '/rgb-photos/how-many/'
-        );
-        this.error = null;
-        this.loginMessage = null;
-        this.isLoading = false;
-        return response.data;
-      } catch {
-        this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
-      }
+    async deleteMeasurement(id) {
+      // TODO: Implement measurement deletion logic
     },
 
-    async getRGBPhotosNumber() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/rgb-photos/how-many'
-        );
+    async planMeasurement(id, planAt, aeDelta) {
+      // TODO : Implement measurement planning logic
+    },
 
-        this.error = null;
-        this.loginMessage = null;
-        this.isLoading = false;
-        return response.data;
-      } catch {
-        this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
-      }
+    async unplanMeasurement(id) {
+      // TODO : Implement measurement unplanning logic
     },
   },
 });

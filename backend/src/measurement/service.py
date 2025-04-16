@@ -69,7 +69,7 @@ class MeasurementService:
 
         # TODO validation
 
-        current_time = dto.planned_from
+        current_time = dto.plan_from
         while current_time <= dto.plan_to:
             single_dto = MeasurementCreateDto(name=dto.name, description=dto.description,
                                               plan_at=current_time, ae_delta=dto.ae_delta)
