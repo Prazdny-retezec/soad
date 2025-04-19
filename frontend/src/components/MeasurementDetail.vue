@@ -88,6 +88,81 @@
           >
             Cancel
           </v-btn>
+
+          <v-btn
+            class="mr-2 mb-2"
+            variant="tonal"
+            color="secondary"
+            v-if="detail.state === 'PLANNED'"
+            @click="unplanMeasurement(detail.id)"
+          >
+            Unplan
+          </v-btn>
+          <v-btn
+            class="mr-2 mb-2"
+            variant="tonal"
+            color="primary"
+            v-if="detail.state === 'NEW'"
+            @click="openPlanDialog"
+          >
+            Plan
+          </v-btn>
+
+          <!-- Plan Date Dialog -->
+          <v-dialog v-model="planDialog" max-width="500">
+            <v-card rounded="xl" class="pa-6">
+              <v-card-title class="text-h5">Set Plan Date and Time</v-card-title>
+              <v-card-text>
+                <!-- Plan From (Date + Time Picker) -->
+                <v-card-text class="subtitle text-dark-green font-weight-bold">Plan From</v-card-text>
+                <v-row justify="center" class="mb-4">
+                  <v-col cols="12">
+                    <v-date-picker v-model="selectedDateFrom" class="w-100" />
+                  </v-col>
+                  <v-col cols="12" class="mt-4">
+                    <v-time-picker v-model="selectedTimeFrom" format="24hr" scrollable class="w-100" />
+                  </v-col>
+                </v-row>
+
+                <!-- AE Delta Section -->
+                <v-card-text class="subtitle text-dark-green font-weight-bold">AE Delta</v-card-text>
+                <v-row justify="center" class="mb-4">
+                  <v-col cols="6">
+                    <v-text-field
+                      v-model="aeDeltaValue"
+                      label="AE Delta Value"
+                      type="number"
+                      min="1"
+                      variant="outlined"
+                      class="w-100"
+                    />
+                  </v-col>
+                  <v-col cols="6">
+                    <v-select
+                      v-model="aeDeltaUnit"
+                      label="AE Delta Unit"
+                      :items="['Seconds', 'Minutes', 'Hours', 'Days']"
+                      variant="outlined"
+                      class="w-100"
+                    />
+                  </v-col>
+                </v-row>
+              </v-card-text>
+
+              <v-card-actions class="justify-end">
+                <v-btn color="primary" variant="tonal" @click="submitPlan" class="mr-2">
+                  Save Plan
+                </v-btn>
+                <v-btn variant="text" @click="planDialog = false">
+                  Cancel
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+
+
+
         </v-card-actions>
       </v-card>
     </template>
@@ -113,7 +188,12 @@ export default {
       isEditing: false,
       editedName: '',
       editedDescription: '',
-    };
+      planDialog: false,
+      selectedDateFrom: null,
+      selectedTimeFrom: null,
+      aeDeltaValue: 3,
+      aeDeltaUnit: 'Days',
+  };
   },
   async created() {
     const measurementStore = useMeasurementStore();
@@ -140,22 +220,83 @@ export default {
       this.editedName = '';
       this.editedDescription = '';
     },
-    async submitUpdate() {
-      const measurementStore = useMeasurementStore();
+
+    // Plan Measurement Method
+    openPlanDialog() {
+      this.planDialog = true;
+    },
+    async submitPlan() {
+      if (!this.selectedDateFrom || !this.selectedTimeFrom) {
+        alert('Please select both date and time.');
+        return;
+      }
+
+      const planDate = new Date(this.selectedDateFrom);
+      const [hours, minutes] = this.selectedTimeFrom.split(':');
+      planDate.setHours(parseInt(hours));
+      planDate.setMinutes(parseInt(minutes));
+      planDate.setSeconds(0);
+
+      let aeDeltaPrefix = 'P';
+      const aeDeltaUnitChar = this.aeDeltaUnit.charAt(0);
+      if (['H', 'M', 'S'].includes(aeDeltaUnitChar)) aeDeltaPrefix = 'PT';
+
       const dto = {
-        name: this.editedName,
-        description: this.editedDescription,
+        plan_at: planDate.toISOString(),
+        ae_delta: `${aeDeltaPrefix}${this.aeDeltaValue}${aeDeltaUnitChar}`,
       };
 
-      const updated = await measurementStore.updateMeasurement(this.detail.id, dto);
+      console.log('Plánované datum:', dto.plan_at);
+      console.log('AE Delta:', dto.ae_delta);
 
-      if (!measurementStore.error) {
-        this.detail = updated; // Full refresh of local detail
-        this.isEditing = false;
-      } else {
-        alert(measurementStore.error);
+      try {
+        const measurementStore = useMeasurementStore();
+        await measurementStore.planMeasurement(this.detail.id, dto.plan_at, dto.ae_delta); // opraveno tady!
+        this.detail = await measurementStore.getMeasurement(this.detail.id);
+        this.planDialog = false;
+        alert('Measurement successfully planned.');
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error planning measurement.');
       }
     },
+
+
+    async planMeasurement(id, planAt, aeDelta) {
+      try {
+        this.isLoading = true;
+        
+        const dto = {
+          plan_at: planAt,
+          ae_delta: aeDelta,
+        };
+        
+        const response = await axios.post(`${config.backendUrl}/measurement/${id}/plan`, dto);
+
+        const index = this.measurements.findIndex(m => m.id === id);
+        if (index !== -1) {
+          this.measurements[index] = { ...this.measurements[index], ...response.data };
+        }
+
+        this.error = null;
+        return response.data;
+      } catch (error) {
+        this.error = 'Cannot plan measurement';
+        console.error('Error planning measurement:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+
+    async unplanMeasurement(id) {
+      const measurementStore = useMeasurementStore();
+      await measurementStore.unplanMeasurement(id);
+      this.detail.state = 'NEW';  // Change state to NEW after unplanning
+      this.detail.planned_at = null; // Remove planned_at
+    },
+
+
   },
 };
 </script>

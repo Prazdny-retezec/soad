@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from typing import List
-
+import re
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 
@@ -42,41 +42,96 @@ class MeasurementService:
 
         measurements = query.all()
         return measurements
-
+    """
     def create_measurement(self, dto: MeasurementCreateDto) -> Measurement:
-        # map DTO to entity
-        measurement = Measurement(
-            name=dto.name,
-            description=dto.description,
-            planned_at=dto.plan_at,
-            ae_delta=dto.ae_delta,
-            state=MeasurementState.NEW,
-        )
-
-        # TODO validation
-
-        # create
-        measurement = self.__save_measurement(measurement)
-
-        # plan
-        if dto.plan_at is not None:
-            measurement = self.plan_measurement(measurement.id, None, None)
-
-        return measurement
+        logging.debug(f"Creating measurement with data: {dto}")
+        try:
+            # Map DTO to entity
+            measurement = Measurement(
+                name=dto.name,
+                description=dto.description,
+                planned_at=dto.plan_at,
+                ae_delta=dto.ae_delta,
+                state=MeasurementState.NEW,
+            )
+            measurement = self.__save_measurement(measurement)
+            return measurement
+        except Exception as e:
+            logging.error(f"Error while creating measurement: {e}")
+            raise HTTPException(status_code=500, detail="Error creating measurement")
 
     def create_periodic_measurement(self, dto: MeasurementCreatePeriodicDto) -> List[Measurement]:
+        # List to store created measurements
         measurements = []
-
-        # TODO validation
-
+        
+        # Loop through the given period and create measurements
         current_time = dto.plan_from
-        while current_time <= dto.plan_to:
-            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description,
-                                              plan_at=current_time, ae_delta=dto.ae_delta)
-            measurements.append(self.create_measurement(single_dto))
+        while current_time < dto.plan_to:
+            # Create measurement for each period
+            measurement = Measurement(
+                name=dto.name,
+                description=dto.description,
+                planned_at=current_time,
+                ae_delta=dto.ae_delta,
+                state=MeasurementState.NEW,
+            )
+
+            # Save the measurement to the database
+            measurement = self.__save_measurement(measurement)
+            measurements.append(measurement)
+
+            # Increment the current_time by the period
             current_time += dto.period
 
         return measurements
+"""
+    def create_measurement(self, dto: MeasurementCreateDto) -> Measurement:
+        logging.debug(f"Creating measurement with data: {dto}")
+        try:
+            # Check if plan_at is provided, and set the state accordingly
+            state = MeasurementState.PLANNED if dto.plan_at else MeasurementState.NEW
+
+            # Map DTO to entity
+            measurement = Measurement(
+                name=dto.name,
+                description=dto.description,
+                planned_at=dto.plan_at,
+                ae_delta=dto.ae_delta,
+                state=state,
+            )
+            measurement = self.__save_measurement(measurement)
+            return measurement
+        except Exception as e:
+            logging.error(f"Error while creating measurement: {e}")
+            raise HTTPException(status_code=500, detail="Error creating measurement")
+    def create_periodic_measurement(self, dto: MeasurementCreatePeriodicDto) -> List[Measurement]:
+        # List to store created measurements
+        measurements = []
+        
+        # Loop through the given period and create measurements
+        current_time = dto.plan_from
+        while current_time < dto.plan_to:
+            # Set state to PLANNED for all periodic measurements
+            state = MeasurementState.PLANNED
+
+            # Create measurement for each period
+            measurement = Measurement(
+                name=dto.name,
+                description=dto.description,
+                planned_at=current_time,
+                ae_delta=dto.ae_delta,
+                state=state,
+            )
+
+            # Save the measurement to the database
+            measurement = self.__save_measurement(measurement)
+            measurements.append(measurement)
+
+            # Increment the current_time by the period
+            current_time += dto.period
+
+        return measurements
+
 
     def update_measurement(self, measurement_id: int, dto: MeasurementUpdateDto) -> Measurement:
         measurement = self.get_measurement(measurement_id)
@@ -92,86 +147,79 @@ class MeasurementService:
         return measurement
 
     def delete_measurement(self, measurement_id: int):
-        query = (self.db
-            .query(Measurement)
-            .filter(
-                (Measurement.id == measurement_id) &
-                (Measurement.deleted_at.is_(None))
+        try:
+            # Query the measurement by ID and check if it exists
+            query = (self.db
+                .query(Measurement)
+                .filter(
+                    (Measurement.id == measurement_id) &
+                    (Measurement.deleted_at.is_(None))
+                )
             )
-        )
 
-        measurement: Measurement | None = query.first()
+            measurement = query.first()
 
-        # ignore deleted measurement
-        if measurement is None:
-            return
+            if measurement is None:
+                raise HTTPException(status_code=404, detail="Measurement not found")
 
-        # remove run of planned job
-        if measurement.scheduler_job_id is not None:
-            self.scheduler.remove_job(measurement.scheduler_job_id)
-            measurement.scheduler_job_id = None
+            # Perform any related job removal and soft delete
+            if measurement.scheduler_job_id:
+                try:
+                    self.scheduler.remove_job(measurement.scheduler_job_id)
+                except Exception as e:
+                    logging.error(f"Error removing job {measurement.scheduler_job_id}: {e}")
+                measurement.scheduler_job_id = None
 
-        # soft delete
-        measurement.deleted_at = datetime.now()
-        self.db.add(measurement)
-        self.db.commit()
+            measurement.deleted_at = datetime.now()
+            self.db.add(measurement)
+            self.db.commit()
 
-    def plan_measurement(
-            self,
-            measurement_id: int,
-            plan_at: datetime | None,
-            ae_delta: timedelta | None
-    ) -> Measurement:
+            return measurement
+        except Exception as e:
+            logging.error(f"Error deleting measurement with ID {measurement_id}: {e}")
+            self.db.rollback()
+            raise HTTPException(status_code=500, detail="Error deleting measurement")
+
+
+    def plan_measurement(self, measurement_id: int, plan_at: datetime, ae_delta: timedelta) -> Measurement:
         measurement = self.get_measurement(measurement_id)
 
-        # override planning attributes if they are sent
-        if plan_at is not None:
-            measurement.planned_at = plan_at
-        if ae_delta is not None:
-            measurement.ae_delta = ae_delta
+        # Update the measurement attributes
+        measurement.planned_at = plan_at
+        measurement.ae_delta = ae_delta
 
-        # TODO validations overriding measurements by time, measurement in bad state, don't plan at history date ...
-
+        # Plan the measurement via scheduler
         try:
-            # plan measurements via scheduler
             job = self.scheduler.add_job(
-                func=MeasurementService.proceed_measuring,
+                func=self.proceed_measuring,
                 args=[measurement.id],
                 trigger="date",
-
-                # we shift the start so we can collect AE before capturing images
-                run_date=measurement.planned_at - measurement.ae_delta
+                run_date=plan_at - ae_delta
             )
 
-            # change state to planned
+            # Update state to PLANNED and assign job ID
             measurement.state = MeasurementState.PLANNED
             measurement.scheduler_job_id = job.id
 
-            # save updated measurement
             measurement = self.__save_measurement(measurement)
+            return measurement
 
-            logging.debug(f"Planned execution of measurement at {plan_at}")
         except Exception as e:
-            logging.error(e)
             measurement.state = MeasurementState.ERROR
             measurement = self.__save_measurement(measurement)
-
-        return measurement
+            raise HTTPException(status_code=500, detail=f"Error planning measurement: {str(e)}")
 
     def unplan_measurement(self, measurement_id: int) -> Measurement:
         measurement = self.get_measurement(measurement_id)
 
-        # TODO validations: bad state, already running, ....
-
-        # change state back to new
+        # Change state back to new
         measurement.state = MeasurementState.NEW
+        measurement.planned_at = None  # Remove the planned_at value
 
-        # remove scheduled job from scheduler
-        self.scheduler.remove_job(measurement.scheduler_job_id)
-
-        # save measurement
+        # Save updated measurement
         measurement = self.__save_measurement(measurement)
         return measurement
+
 
     @staticmethod  # must be static due to serialization of job
     async def proceed_measuring(measurement_id: int):
