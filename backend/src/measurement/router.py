@@ -1,6 +1,7 @@
 from typing import List
+import logging
 from fastapi import APIRouter, status, Depends
-
+from fastapi import HTTPException
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto, \
     MeasurementCreatePeriodicDto, MeasurementPlanDto
 from measurement.service import MeasurementService
@@ -79,7 +80,8 @@ async def delete_measurement(id: int, service: MeasurementService = Depends(Meas
     description="Naplánuje měření na zvolený čas s volitelnou odchylkou."
              )
 async def plan_measurement(id: int, dto: MeasurementPlanDto, service: MeasurementService = Depends(MeasurementService)):
-    service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
+    print(f"Planning measurement {id} with data: {dto.plan_at}, {dto.ae_delta}")
+    return service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
 
 
 @router.delete("/{id}/plan", status_code=status.HTTP_200_OK,
