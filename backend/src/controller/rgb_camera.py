@@ -21,7 +21,6 @@ class RgbCameraController:
             raise RuntimeError("Unable to capture image - camera is not available")
 
         # check directory and create one if it does not exist
-        filename = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
 
@@ -35,14 +34,15 @@ class RgbCameraController:
         with self.device.RetrieveResult(2000) as result:
             image.AttachGrabResultBuffer(result)
 
+            # create filename
+            filename = self.generate_name(img_format)
+
+            # check if target format is supported and if so save the image to disk
             if img_format == ImageFormat.PNG:
-                filename = f"{output_dir}/{filename}_%d.png"
                 image.Save(pylon.ImageFileFormat_Png, filename)
             elif img_format == ImageFormat.RAW:
-                filename = f"{output_dir}/{filename}_%d.raw"
                 image.Save(pylon.ImageFileFormat_Raw, filename)
             elif img_format == ImageFormat.TIFF:
-                filename = f"{output_dir}/{filename}_%d.tiff"
                 image.Save(pylon.ImageFileFormat_Tiff, filename)
             else:
                 logging.warn("Invalid image format used")
@@ -65,3 +65,7 @@ class RgbCameraController:
         if self.device is not None:
             self.device.Close()
             self.device = None
+
+    @staticmethod
+    def generate_name(img_format: ImageFormat) -> str:
+        return "rgb_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%SZ") + "." + img_format.value.lower()
