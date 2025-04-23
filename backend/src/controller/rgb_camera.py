@@ -13,10 +13,11 @@ class RgbCameraController:
         self.device: pylon.InstantCamera | None = None
 
     def is_available(self) -> bool:
-        camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-        return camera is not None
+        return self.device is not None
 
     def capture_image(self, output_dir: str, quality: int, img_format: ImageFormat):
+        logging.debug("Start of capture")
+
         if not self.is_available():
             raise RuntimeError("Unable to capture image - camera is not available")
 
@@ -30,12 +31,13 @@ class RgbCameraController:
         ipo.SetQuality(quality)
 
         # grab image
-        self.device.StartGrabbing()
+        self.device.StartGrabbing()  # TODO strategy GrabStrategy_LatestImageOnly
         with self.device.RetrieveResult(2000) as result:
             image.AttachGrabResultBuffer(result)
 
             # create filename
-            filename = self.generate_name(img_format)
+            filename = output_dir + "/" + self.generate_name(img_format)
+            logging.error(f"Filename: {filename}")
 
             # check if target format is supported and if so save the image to disk
             if img_format == ImageFormat.PNG:
@@ -50,6 +52,8 @@ class RgbCameraController:
             image.Release()
         self.device.StopGrabbing()
 
+        logging.debug("End of capture")
+
     def __enter__(self):
         tlf = pylon.TlFactory.GetInstance()
         self.device = pylon.InstantCamera(tlf.CreateFirstDevice())
@@ -60,6 +64,8 @@ class RgbCameraController:
         self.device.Open()
         self.device.Width.Value = self.width
         self.device.Height.Value = self.height
+
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.device is not None:
