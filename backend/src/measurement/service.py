@@ -215,17 +215,22 @@ class MeasurementService:
             # TODO turn on acoustic emission
             time.sleep(measurement.ae_delta.seconds)
 
-            # TODO start capturing via multi-spectral camera
+            # start capturing with multi-spectral camera
+            ms_camera : MultiSpectralCameraController = ms_camera_class(output_dir="/home/petr/Git/soad/backend/test_data")
+            ms_camera.start_capturing(ImageFormat.PNG)
 
-            # RGB camera capture
+            # proceed RGB camera image capture
             with rgb_camera_class(1920, 1080) as rgb_camera:
                 rgb_camera.capture_image("/home/petr/Git/soad/backend/test_data", 90, ImageFormat.PNG) # TODO change path
 
+            # acoustic emission time delta wait
             time.sleep(measurement.ae_delta.seconds)
             # TODO stop acoustic emission
-            # TODO stop multi-spectral camera
+
+            # stop MS camera capturing
+            ms_camera.stop_capturing()
+
             # TODO collect data from acoustic emission
-            # TODO collect data from multi-spectral camera
 
             logging.debug(f"Zipping measurement {measurement_id}")
             time.sleep(3)

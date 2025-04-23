@@ -7,10 +7,6 @@ import shutil
 
 
 class RgbCameraMockController(RgbCameraController):
-
-    def __init__(self, width: int, height: int):
-        super().__init__(width, height)
-
     def is_available(self) -> bool:
         return True
 
