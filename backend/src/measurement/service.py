@@ -9,11 +9,17 @@ from fastapi import Depends, HTTPException
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from common.enum import ImageFormat
+from controller.acoustic_emission import AcousticEmissionController
+from controller.mock.acoustic_emission import AcousticEmissionMockController
+from controller.mock.multi_spectral_camera import MultiSpectralCameraMockController
+from controller.mock.rgb_camera import RgbCameraMockController
+from controller.multi_spectral_camera import MultiSpectralCameraController
 from controller.rgb_camera import RgbCameraController
 from database import get_db, sessionLocal
 from scheduler import get_scheduler
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
 from measurement.model import Measurement, MeasurementState, MeasurementResult
+from settings import Settings
 
 
 class MeasurementService:
@@ -69,7 +75,7 @@ class MeasurementService:
 
         # TODO validation
 
-        current_time = dto.planned_from
+        current_time = dto.plan_from
         while current_time <= dto.plan_to:
             single_dto = MeasurementCreateDto(name=dto.name, description=dto.description,
                                               plan_at=current_time, ae_delta=dto.ae_delta)
@@ -197,23 +203,34 @@ class MeasurementService:
         measurement.started_at = datetime.now()
         measurement = change_state(measurement, MeasurementState.DOWNLOADING)
 
+        # choose controllers
+        controllers = MeasurementService.__choose_controllers()
+        rgb_camera_class = controllers["rgb"]
+        ms_camera_class = controllers["ms"]
+        ae_class = controllers["ae"]
+
         # TODO replace time.sleep by multi-threading implementation, start measuring async and after that join threads
         # and collect all results
         try:
             # TODO turn on acoustic emission
             time.sleep(measurement.ae_delta.seconds)
 
-            # TODO start capturing via multi-spectral camera
+            # start capturing with multi-spectral camera
+            ms_camera : MultiSpectralCameraController = ms_camera_class(output_dir="/home/petr/Git/soad/backend/test_data")
+            ms_camera.start_capturing(ImageFormat.PNG)
 
-            # RGB camera capture
-            with RgbCameraController(1920, 1080) as rgb_camera:
-                rgb_camera.capture_image("/data/img", 90, ImageFormat.PNG)
+            # proceed RGB camera image capture
+            with rgb_camera_class(1920, 1080) as rgb_camera:
+                rgb_camera.capture_image("/home/petr/Git/soad/backend/test_data", 90, ImageFormat.PNG) # TODO change path
 
+            # acoustic emission time delta wait
             time.sleep(measurement.ae_delta.seconds)
             # TODO stop acoustic emission
-            # TODO stop multi-spectral camera
+
+            # stop MS camera capturing
+            ms_camera.stop_capturing()
+
             # TODO collect data from acoustic emission
-            # TODO collect data from multi-spectral camera
 
             logging.debug(f"Zipping measurement {measurement_id}")
             time.sleep(3)
@@ -239,6 +256,21 @@ class MeasurementService:
             change_state(measurement, MeasurementState.ERROR)
         finally:
             db.close()
+
+    @staticmethod
+    def __choose_controllers():
+        if Settings().mock_controller:
+            return {
+                "rgb": RgbCameraMockController,
+                "ms": MultiSpectralCameraMockController,
+                "ae": AcousticEmissionMockController
+            }
+        else:
+            return {
+                "rgb": RgbCameraController,
+                "ms": MultiSpectralCameraController,
+                "ae": AcousticEmissionController
+            }
 
     def __save_measurement(self, measurement: Measurement) -> Measurement:
         self.db.add(measurement)

@@ -18,6 +18,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://api:changeit@database:5432/soad
       - SECRET=top_super_secret
+      - MOCK_CONTROLLER=true
     ports:
       - "5001:80"
 
