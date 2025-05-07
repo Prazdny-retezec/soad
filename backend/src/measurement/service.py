@@ -21,6 +21,8 @@ from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, Measurem
 from measurement.model import Measurement, MeasurementState, MeasurementResult
 from settings import Settings
 
+from google_drive.google_drive_handler import gdrive_auth, upload_zip_file
+from google_drive.zipper import fake_zipper #TODO delete and replace with create_zip_archive
 
 class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
@@ -236,16 +238,20 @@ class MeasurementService:
             time.sleep(3)
             measurement = change_state(measurement, MeasurementState.ZIPPING)
             # TODO zip data together
-
+            zip_file_name = fake_zipper(measurement.name + ".zip")
+            
             logging.debug(f"Uploading measurement {measurement_id}")
             time.sleep(3)
             measurement = change_state(measurement, MeasurementState.UPLOADING)
             # TODO upload data to cloud
+            gdrive_service = gdrive_auth()
+            gdrive_url = upload_zip_file(gdrive_service, path_to_local_zip_file = zip_file_name, gdrive_file_name = measurement.name)
+            
 
             # TODO use actual result and actual cloud URL
             logging.debug(f"Finishing measurement {measurement_id}")
             measurement.result = MeasurementResult(
-                cloud_url="https://www.icegif.com/wp-content/uploads/2023/01/icegif-162.gif",
+                cloud_url=gdrive_url,
                 measurement_id=measurement_id
             )
             measurement.finished_at = datetime.now()
