@@ -30,5 +30,8 @@ jobs:
     - name: Upload to Alwaysdata via SCP
       if: success()
       run: |
-        ssh -o StrictHostKeyChecking=no prazdnyretezec:${{ secrets.ALWAYSDATA_PASSWORD }}@ssh-prazdnyretezec.alwaysdata.net 'rm -rf /home/prazdnyretezec/soad/backend/*'
-        scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec:${{ secrets.ALWAYSDATA_PASSWORD }}@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad/backend
+        mkdir -p ~/.ssh
+        echo "${{ secrets.ALWAYSDATA_SERVER_KEY }}" >> ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'rm -rf /home/prazdnyretezec/soad/backend/*'
+        scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad/backend
