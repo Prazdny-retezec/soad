@@ -92,16 +92,16 @@
         </v-row>
 
         <!-- Error Alert -->
-        <v-row justify="center" class="mb-2 px-4">
-          <v-alert
-            max-width="80%"
-            v-model="showAlert"
-            closable
-            title="Please fill in all required fields!"
-            type="error"
-            variant="tonal"
-          ></v-alert>
-        </v-row>
+        <v-alert
+          max-width="80%"
+          v-if="showAlert" 
+          closable
+          :title="errorMessage" 
+          type="error"
+          variant="tonal"
+        ></v-alert>
+
+
 
         <!-- Schedule Button -->
         <v-card-actions class="justify-center">
@@ -115,6 +115,7 @@
           >
             Schedule measurement
           </v-btn>
+
         </v-card-actions>
       </v-card>
 
@@ -250,30 +251,62 @@ export default {
       }
 
       const planFrom = new Date(this.selectedDateFrom);
-      const [hours, minutes] = this.selectedTimeFrom.split(':');
-      planFrom.setHours(parseInt(hours));
-      planFrom.setMinutes(parseInt(minutes));
+      const [hoursFrom, minutesFrom] = this.selectedTimeFrom.split(':');
+      planFrom.setHours(parseInt(hoursFrom));
+      planFrom.setMinutes(parseInt(minutesFrom));
       planFrom.setSeconds(0);
       planFrom.setMilliseconds(0);
 
-      const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`; // AE Delta in ISO 8601 format
+      // Kontrola, zda plánovaný čas není v minulosti
+      const now = new Date();
+      if (planFrom <= now) {
+        this.showAlert = true;
+        this.errorMessage = 'The planned measurement time cannot be in the past.';
+        return;
+      }
+
+      // Kontrola, zda plánovaný čas není příliš blízko, vzhledem k ae_delta
+      const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
+      if (planFrom <= now.getTime() + aeDeltaDuration) {
+        this.showAlert = true;
+        this.errorMessage = `The planned measurement time is too soon, considering the AE delta of ${this.aeDeltaValue} ${this.aeDeltaUnit}.`;
+        return;
+      }
+
+      // Pokračování s naplánováním, pokud je vše v pořádku
+      const planTo = this.selectedDateTo ? new Date(this.selectedDateTo) : planFrom;
+      if (this.selectedDateTo) {
+        const [hoursTo, minutesTo] = this.selectedTimeTo.split(':');
+        planTo.setHours(parseInt(hoursTo));
+        planTo.setMinutes(parseInt(minutesTo));
+        planTo.setSeconds(0);
+        planTo.setMilliseconds(0);
+      }
+
+      if (planFrom >= planTo) {
+        this.showAlert = true;
+        this.errorMessage = 'The "From" date and time must be earlier than the "To" date and time.';
+        return;
+      }
+
+      const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
       const periodValue = this.periodValue;
-      const periodUnit = this.periodUnit.charAt(0).toUpperCase(); // First character (e.g., 'D' for Days)
+      const periodUnit = this.periodUnit.charAt(0).toUpperCase(); 
 
       const dto = {
         name: this.measurementName,
         description: this.measurementDescription,
-        plan_from: planFrom.toISOString(), // plan_from in ISO format
-        plan_to: this.selectedDateTo ? new Date(this.selectedDateTo).toISOString() : planFrom.toISOString(),
-        period: `P${periodValue}${periodUnit}`, // Period in ISO 8601 format
-        ae_delta: aeDelta, // AE delta in the correct format
+        plan_from: planFrom.toISOString(),
+        plan_to: planTo.toISOString(),
+        period: `P${periodValue}${periodUnit}`,
+        ae_delta: aeDelta,
       };
 
       try {
         const measurementStore = useMeasurementStore();
         const response = await measurementStore.createPeriodicMeasurement(dto);
         console.log('Periodic measurements created successfully:', response);
-        this.dialog = false; // Close the dialog after successful submission
+        this.dialog = false;
       } catch (error) {
         this.showAlert = true;
         this.errorMessage = 'Error creating periodic measurement!';
@@ -281,14 +314,14 @@ export default {
       }
     },
 
+
     async startOneTimeMeasurement() {
+      // Kontrola, zda všechna povinná pole byla vyplněna
       if (!this.measurementName || !this.aeDeltaValue || !this.aeDeltaUnit) {
         this.showAlert = true;
         this.errorMessage = 'Please fill in all required fields.';
         return;
       }
-
-      const status = this.selectedDate && this.selectedTime ? 'PLANNED' : 'NEW';
 
       const planAt = this.selectedDate && this.selectedTime 
         ? (() => {
@@ -301,6 +334,24 @@ export default {
             return date;
           })()
         : null;
+
+      // Kontrola, zda plánovaný čas není v minulosti
+      const now = new Date();
+      if (planAt && planAt <= now) {
+        this.showAlert = true;
+        this.errorMessage = 'The planned measurement time cannot be in the past.';
+        return;
+      }
+
+      // Kontrola, zda plánovaný čas není příliš brzy vzhledem k ae_delta
+      const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
+      if (planAt && planAt <= now.getTime() + aeDeltaDuration) {
+        this.showAlert = true;
+        this.errorMessage = `The planned measurement time is too soon, considering the AE delta of ${this.aeDeltaValue} ${this.aeDeltaUnit}.`;
+        return;
+      }
+
+      const status = planAt ? 'PLANNED' : 'NEW';
 
       const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
 
@@ -323,9 +374,20 @@ export default {
       }
     },
 
+    // Pomocná funkce pro převod ae_delta na milisekundy
+    convertToDuration(aeDelta) {
+      const duration = aeDelta.match(/PT(\d+)([A-Za-z]+)/);
+      const value = parseInt(duration[1]);
+      const unit = duration[2].toLowerCase();
 
-
-
+      switch (unit) {
+        case 'seconds': return value * 1000;
+        case 'minutes': return value * 60 * 1000;
+        case 'hours': return value * 60 * 60 * 1000;
+        case 'days': return value * 24 * 60 * 60 * 1000;
+        default: return 0;
+      }
+    },
 
     closeDialog() {
       this.selectedDate = null;
@@ -372,4 +434,40 @@ export default {
   padding-left: 2rem;
   padding-right: 2rem;
 }
+
+.v-card {
+  display: flex;
+  flex-direction: column;  /* Zajištění vertikálního uspořádání */
+  justify-content: flex-start; /* Zajištění správného zarovnání */
+}
+
+.v-alert {
+  margin-bottom: 20px; /* Větší mezera pod hláškou */
+  max-width: 100%; /* Šířka alertu bude maximálně 100%, aby nevyčníval mimo */
+  padding: 20px; /* Zvětšení paddingu pro lepší čitelnost */
+  font-size: 16px; /* Zvětšení velikosti textu */
+  line-height: 1.5; /* Zajištění lepší čitelnosti */
+  background-color: #f8d7da; /* Světlejší pozadí pro chybovou hlášku */
+  color: #721c24; /* Červený text pro zvýraznění chyby */
+  border: 1px solid #f5c6cb; /* Červený okraj */
+  border-radius: 5px; /* Zaoblení rohů */
+}
+
+.v-card-actions {
+  margin-top: 20px; /* Zajistíme, že mezi hláškou a tlačítkem bude mezera */
+  align-self: center; /* Zarovnání tlačítka na střed */
+}
+
+.v-dialog {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  max-height: 80vh; /* Omezíme výšku dialogu */
+}
+
+.v-btn {
+  width: 300px; /* Zajistíme, že tlačítko bude mít vždy stejnou šířku */
+}
+
+
 </style>
