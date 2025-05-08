@@ -91,18 +91,6 @@
           />
         </v-row>
 
-        <!-- Error Alert -->
-        <v-alert
-          max-width="80%"
-          v-if="showAlert" 
-          closable
-          :title="errorMessage" 
-          type="error"
-          variant="tonal"
-        ></v-alert>
-
-
-
         <!-- Schedule Button -->
         <v-card-actions class="justify-center">
           <v-btn 
@@ -115,8 +103,19 @@
           >
             Schedule measurement
           </v-btn>
-
         </v-card-actions>
+
+        <!-- Error Alert (Moved Below Button) -->
+        <v-row justify="center" class="my-2 px-4">
+          <v-alert
+            max-width="100%"
+            v-if="showAlert" 
+            closable
+            :title="errorMessage" 
+            type="error"
+            variant="tonal"
+          ></v-alert>
+        </v-row>
       </v-card>
 
       <!-- ONE-TIME MEASUREMENT -->
@@ -148,7 +147,7 @@
             <v-time-picker v-model="selectedTime" format="24hr" scrollable class="w-100" />
           </v-col>
           <v-col cols="6">
-            <v-date-picker v-model="selectedDate" class="w-100" />
+            <v-date-picker v-model="selectedDate" class="w-100" :max="maxDate" format="yyyy-MM-dd" />
           </v-col>
         </v-row>
 
@@ -189,7 +188,7 @@
         <!-- Alert -->
         <v-row justify="center" class="my-2 px-4">
           <v-alert
-            max-width="80%"
+            max-width="100%"
             v-model="showAlert"
             closable
             :title="errorMessage"
@@ -244,85 +243,133 @@ export default {
   },
   methods: {
     async schedulePeriodicMeasurement() {
-      if (!this.selectedDateFrom || !this.selectedTimeFrom || !this.periodValue || !this.periodUnit || !this.aeDeltaValue || !this.aeDeltaUnit || !this.measurementName) {
-        this.showAlert = true;
-        this.errorMessage = 'Please fill in all required fields.';
-        return;
-      }
+  // Zkontrolujte, zda jsou všechny povinné hodnoty vyplněny
+  if (!this.selectedDateFrom || !this.selectedTimeFrom || !this.periodValue || !this.periodUnit || !this.aeDeltaValue || !this.aeDeltaUnit || !this.measurementName) {
+    this.showAlert = true;
+    this.errorMessage = 'Please fill in all required fields.';
+    return;
+  }
 
-      const planFrom = new Date(this.selectedDateFrom);
-      const [hoursFrom, minutesFrom] = this.selectedTimeFrom.split(':');
-      planFrom.setHours(parseInt(hoursFrom));
-      planFrom.setMinutes(parseInt(minutesFrom));
-      planFrom.setSeconds(0);
-      planFrom.setMilliseconds(0);
+  // Nastavení data a času pro "plan_from"
+  const planFrom = new Date(this.selectedDateFrom);
+  const [hoursFrom, minutesFrom] = this.selectedTimeFrom.split(':');
+  planFrom.setHours(parseInt(hoursFrom));
+  planFrom.setMinutes(parseInt(minutesFrom));
+  planFrom.setSeconds(0);
+  planFrom.setMilliseconds(0);
 
-      // Kontrola, zda plánovaný čas není v minulosti
-      const now = new Date();
-      if (planFrom <= now) {
-        this.showAlert = true;
-        this.errorMessage = 'The planned measurement time cannot be in the past.';
-        return;
-      }
+  // Kontrola, zda již není naplánováno měření v daném čase
+  const conflict = await this.checkForConflictingMeasurements(planFrom);
+  if (conflict) {
+    this.showAlert = true;
+    this.errorMessage = 'A measurement is already scheduled for the selected time.';
+    return;
+  }
 
-      // Kontrola, zda plánovaný čas není příliš blízko, vzhledem k ae_delta
-      const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
-      if (planFrom <= now.getTime() + aeDeltaDuration) {
-        this.showAlert = true;
-        this.errorMessage = `The planned measurement time is too soon, considering the AE delta of ${this.aeDeltaValue} ${this.aeDeltaUnit}.`;
-        return;
-      }
+  // Kontrola, zda naplánovaný čas není v minulosti
+  const now = new Date();
+  if (planFrom <= now) {
+    this.showAlert = true;
+    this.errorMessage = 'The planned measurement time cannot be in the past.';
+    return;
+  }
 
-      // Pokračování s naplánováním, pokud je vše v pořádku
-      const planTo = this.selectedDateTo ? new Date(this.selectedDateTo) : planFrom;
-      if (this.selectedDateTo) {
-        const [hoursTo, minutesTo] = this.selectedTimeTo.split(':');
-        planTo.setHours(parseInt(hoursTo));
-        planTo.setMinutes(parseInt(minutesTo));
-        planTo.setSeconds(0);
-        planTo.setMilliseconds(0);
-      }
+  // Kontrola, zda naplánovaný čas není příliš blízko s ohledem na ae_delta
+  const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
+  if (planFrom <= now.getTime() + aeDeltaDuration) {
+    this.showAlert = true;
+    this.errorMessage = `The planned measurement time is too soon, considering the AE delta of ${this.aeDeltaValue} ${this.aeDeltaUnit}.`;
+    return;
+  }
 
-      if (planFrom >= planTo) {
-        this.showAlert = true;
-        this.errorMessage = 'The "From" date and time must be earlier than the "To" date and time.';
-        return;
-      }
+  // Nastavení "plan_to" pokud je vyplněno
+  const planTo = this.selectedDateTo ? new Date(this.selectedDateTo) : planFrom;
+  if (this.selectedDateTo) {
+    const [hoursTo, minutesTo] = this.selectedTimeTo.split(':');
+    planTo.setHours(parseInt(hoursTo));
+    planTo.setMinutes(parseInt(minutesTo));
+    planTo.setSeconds(0);
+    planTo.setMilliseconds(0);
+  }
 
-      const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
-      const periodValue = this.periodValue;
-      const periodUnit = this.periodUnit.charAt(0).toUpperCase(); 
+  // Kontrola, zda "plan_from" je dříve než "plan_to"
+  if (planFrom >= planTo) {
+    this.showAlert = true;
+    this.errorMessage = 'The "From" date and time must be earlier than the "To" date and time.';
+    return;
+  }
 
-      const dto = {
-        name: this.measurementName,
-        description: this.measurementDescription,
-        plan_from: planFrom.toISOString(),
-        plan_to: planTo.toISOString(),
-        period: `P${periodValue}${periodUnit}`,
-        ae_delta: aeDelta,
-      };
+  // **Kontrola počtu opakování**:
+  // Vypočteme, jaký je časový rozdíl mezi plan_from a plan_to v milisekundách.
+  const timeDiff = planTo - planFrom;
 
+  // Poté spočítáme, kolik opakování se vejde do tohoto časového rámce.
+  const periodDuration = this.convertToDuration(`PT${this.periodValue}${this.periodUnit.charAt(0)}`);
+
+  // Vypočteme maximální počet opakování, které se vejdou do časového intervalu
+  const maxAllowedPeriods = Math.floor(timeDiff / periodDuration);
+
+  // Pokud je zadaný počet opakování větší než maximální povolený počet, zobrazíme chybu.
+  if (this.periodValue > maxAllowedPeriods) {
+    this.showAlert = true;
+    this.errorMessage = `The number of repetitions exceeds the time frame. You can schedule a maximum of ${maxAllowedPeriods} repetitions.`;
+    return;
+  }
+
+  // Připravíme hodnoty pro DTO (Data Transfer Object)
+  const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
+  const periodValue = this.periodValue;
+  const periodUnit = this.periodUnit.charAt(0).toUpperCase();
+
+  const dto = {
+    name: this.measurementName,
+    description: this.measurementDescription,
+    plan_from: planFrom.toISOString(),
+    plan_to: planTo.toISOString(),
+    period: `P${periodValue}${periodUnit}`,
+    ae_delta: aeDelta,
+  };
+
+  try {
+    // Odeslání požadavku na backend pro vytvoření měření
+    const response = await axios.post(`${Config.backendUrl}/measurement/periodic`, dto);
+    console.log('Periodic measurements created successfully:', response.data);
+
+    // Zavřete dialog po úspěšném vytvoření měření
+    this.dialog = false;
+  } catch (error) {
+    this.showAlert = true;
+    this.errorMessage = 'Error creating periodic measurement!';
+    console.error('Error:', error);
+  }
+},
+
+
+    // Funkce pro kontrolu konfliktů s existujícím měřením
+    async checkForConflictingMeasurements(planFrom) {
       try {
-        const measurementStore = useMeasurementStore();
-        const response = await measurementStore.createPeriodicMeasurement(dto);
-        console.log('Periodic measurements created successfully:', response);
-        this.dialog = false;
+        const response = await axios.get(`${Config.backendUrl}/measurement/conflict`, {
+          params: {
+            planFrom: planFrom.toISOString(), // Posíláme naplánovaný čas na backend
+          },
+        });
+
+        return response.data.conflict;  // Pokud existuje konflikt, vrací true
       } catch (error) {
-        this.showAlert = true;
-        this.errorMessage = 'Error creating periodic measurement!';
-        console.error('Error:', error);
+        console.error('Error checking for conflicts:', error);
+        return false;  // Pokud dojde k chybě, považujeme to za neexistenci konfliktu
       }
     },
 
-
     async startOneTimeMeasurement() {
-      // Kontrola, zda všechna povinná pole byla vyplněna
+      // Zkontrolujte, zda jsou všechny povinné hodnoty vyplněny
       if (!this.measurementName || !this.aeDeltaValue || !this.aeDeltaUnit) {
         this.showAlert = true;
         this.errorMessage = 'Please fill in all required fields.';
         return;
       }
 
+      // Nastavení data a času pro "plan_at"
       const planAt = this.selectedDate && this.selectedTime 
         ? (() => {
             const date = new Date(this.selectedDate);
@@ -335,7 +382,7 @@ export default {
           })()
         : null;
 
-      // Kontrola, zda plánovaný čas není v minulosti
+      // Kontrola, zda naplánovaný čas není v minulosti
       const now = new Date();
       if (planAt && planAt <= now) {
         this.showAlert = true;
@@ -343,7 +390,7 @@ export default {
         return;
       }
 
-      // Kontrola, zda plánovaný čas není příliš brzy vzhledem k ae_delta
+      // Kontrola, zda naplánovaný čas není příliš brzy s ohledem na ae_delta
       const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
       if (planAt && planAt <= now.getTime() + aeDeltaDuration) {
         this.showAlert = true;
@@ -351,16 +398,14 @@ export default {
         return;
       }
 
-      const status = planAt ? 'PLANNED' : 'NEW';
-
+      // Odeslání požadavku na backend pro vytvoření měření
       const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
-
       const dto = {
         name: this.measurementName,
         description: this.measurementDescription,
         plan_at: planAt ? planAt.toISOString() : null,
         ae_delta: aeDelta,
-        status,
+        status: planAt ? 'PLANNED' : 'NEW',
       };
 
       try {
@@ -373,6 +418,7 @@ export default {
         console.error('Error:', error);
       }
     },
+
 
     // Pomocná funkce pro převod ae_delta na milisekundy
     convertToDuration(aeDelta) {
@@ -437,25 +483,24 @@ export default {
 
 .v-card {
   display: flex;
-  flex-direction: column;  /* Zajištění vertikálního uspořádání */
-  justify-content: flex-start; /* Zajištění správného zarovnání */
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .v-alert {
-  margin-bottom: 20px; /* Větší mezera pod hláškou */
-  max-width: 100%; /* Šířka alertu bude maximálně 100%, aby nevyčníval mimo */
-  padding: 20px; /* Zvětšení paddingu pro lepší čitelnost */
-  font-size: 16px; /* Zvětšení velikosti textu */
-  line-height: 1.5; /* Zajištění lepší čitelnosti */
-  background-color: #f8d7da; /* Světlejší pozadí pro chybovou hlášku */
-  color: #721c24; /* Červený text pro zvýraznění chyby */
-  border: 1px solid #f5c6cb; /* Červený okraj */
-  border-radius: 5px; /* Zaoblení rohů */
+  margin-bottom: 20px; 
+  max-width: 100%; 
+  padding: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: #f8d7da; 
+  color: #721c24; 
+  border: 1px solid #f5c6cb; 
+  border-radius: 5px; 
 }
-
 .v-card-actions {
-  margin-top: 20px; /* Zajistíme, že mezi hláškou a tlačítkem bude mezera */
-  align-self: center; /* Zarovnání tlačítka na střed */
+  margin-top: 20px; 
+  align-self: center;
 }
 
 .v-dialog {

@@ -5,12 +5,23 @@ from fastapi import HTTPException
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto, \
     MeasurementCreatePeriodicDto, MeasurementPlanDto
 from measurement.service import MeasurementService
+from fastapi import APIRouter, Depends
+from datetime import datetime
 
 router = APIRouter(
     prefix="/measurement",
     tags=["Measurement"],
 )
 
+@router.get("/conflict")
+async def check_conflict(planFrom: str, service: MeasurementService = Depends(MeasurementService)):
+    # Převeďte přijatý čas na datetime
+    plan_from = datetime.fromisoformat(planFrom)
+
+    # Kontrola konfliktu
+    conflict = service.check_for_conflicting_measurements(plan_from)
+
+    return {"conflict": conflict}
 
 @router.get("",
     summary="Získat seznam měření",
