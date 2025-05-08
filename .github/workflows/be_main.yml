@@ -35,5 +35,5 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'rm -rf /home/prazdnyretezec/soad/backend/* &&'
         scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad
-        ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'python -m venv /home/prazdnyretezec/backend/.venv && source /home/prazdnyretezec/backend/.venv/bin/activate && pip install -r /home/prazdnyretezec/backend/requirements.txt'
+        ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'python -m venv /home/prazdnyretezec/soad/backend/.venv && source /home/prazdnyretezec/soad/backend/.venv/bin/activate && pip install -r /home/prazdnyretezec/soad/backend/requirements.txt'
         curl -i -X POST --basic --user "${{ secrets.ALWAYSDATA_API_KEY }} account=prazdnyretezec:" https://api.alwaysdata.com/v1/site/947386/restart
