@@ -27,7 +27,7 @@ jobs:
 #    - name: Run tests
 #      run: pytest
 
-    - name: Upload to Alwaysdata via SCP
+    - name: Upload to Alwaysdata via SCP and start backend
       if: success()
       run: |
         mkdir -p ~/.ssh
@@ -35,4 +35,7 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'rm -rf /home/prazdnyretezec/soad/backend/*'
         scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad
-        
+        python -m venv /home/prazdnyretezec/backend/.venv
+        source /home/prazdnyretezec/backend/.venv/bin/activate
+        pip install -r /home/prazdnyretezec/backend/requirements.txt
+        curl -i -X POST --basic --user "${{ ALWAYSDATA_API_KEY }} account=prazdnyretezec:" https://api.alwaysdata.com/v1/site/947386/restart
