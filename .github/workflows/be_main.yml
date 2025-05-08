@@ -31,7 +31,8 @@ jobs:
       if: success()
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.ALWAYSDATA_SERVER_KEY }}" >> ~/.ssh/id_rsa
+        echo "${{ secrets.ALWAYSDATA_SSH_KEY }}" >> ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net 'rm -rf /home/prazdnyretezec/soad/backend/*'
-        scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad/backend
+        scp -o StrictHostKeyChecking=no -r ./backend prazdnyretezec@ssh-prazdnyretezec.alwaysdata.net:/home/prazdnyretezec/soad
+        
