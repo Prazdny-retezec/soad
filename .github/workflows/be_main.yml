@@ -38,4 +38,4 @@ jobs:
         python -m venv /home/prazdnyretezec/backend/.venv
         source /home/prazdnyretezec/backend/.venv/bin/activate
         pip install -r /home/prazdnyretezec/backend/requirements.txt
-        curl -i -X POST --basic --user "${{ ALWAYSDATA_API_KEY }} account=prazdnyretezec:" https://api.alwaysdata.com/v1/site/947386/restart
+        curl -i -X POST --basic --user "${{ secrets.ALWAYSDATA_API_KEY }} account=prazdnyretezec:" https://api.alwaysdata.com/v1/site/947386/restart
