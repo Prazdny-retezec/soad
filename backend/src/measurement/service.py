@@ -77,8 +77,7 @@ class MeasurementService:
 
         current_time = dto.plan_from
         while current_time <= dto.plan_to:
-            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description,
-                                              plan_at=current_time, ae_delta=dto.ae_delta)
+            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description, plan_at=current_time, ae_delta=dto.ae_delta)
             measurements.append(self.create_measurement(single_dto))
             current_time += dto.period
 
@@ -171,9 +170,11 @@ class MeasurementService:
 
         # change state back to new
         measurement.state = MeasurementState.NEW
+        measurement.planned_at = None
 
         # remove scheduled job from scheduler
-        self.scheduler.remove_job(measurement.scheduler_job_id)
+        if measurement.scheduler_job_id is not None:
+            self.scheduler.remove_job(measurement.scheduler_job_id)
 
         # save measurement
         measurement = self.__save_measurement(measurement)
