@@ -105,6 +105,8 @@ def test_create_planned_measurement(time_machine: TimeMachineFixture, client: Te
 def test_create_periodic_planned_measurement(time_machine: TimeMachineFixture, client: TestClient, session: Session):
     # given
     time_machine.move_to(dt(2015, 10, 21, 7, 0, 0))
+
+    # when
     request = {
         "name": "Periodic measurement",
         "description": "testing measurement",
@@ -113,8 +115,6 @@ def test_create_periodic_planned_measurement(time_machine: TimeMachineFixture, c
         "period": "PT30M",
         "ae_delta": "PT1M"
     }
-
-    # when
     client.post("/measurement/periodic", json=request)
 
     # then
@@ -180,3 +180,37 @@ def test_delete_non_existing_measurement(client: TestClient):
 
     # then
     assert response.status_code == 204
+
+
+def test_plan_measurement(time_machine: TimeMachineFixture, client: TestClient, session: Session):
+    # given
+    time_machine.move_to(dt(2018, 10, 23, 9, 0, 0))
+    prepopulate_db(dt(2018, 10, 23, 9, 0, 0), session)
+
+    # when
+    request = {
+        "plan_at": "2018-10-23T12:00:00.000",
+        "ae_delta": "PT3M"
+    }
+    response = client.post("/measurement/1/plan", json=request)
+
+    # then
+    assert response.status_code == 200
+    result = session.query(Measurement).filter(Measurement.id == 1).first()
+    result.state = MeasurementState.PLANNED
+    result.planned_at = dt(2018, 10, 23, 9, 0, 0)
+
+
+def test_unplan_measurement(time_machine: TimeMachineFixture, client: TestClient, session: Session):
+    # given
+    time_machine.move_to(dt(2018, 10, 23, 9, 0, 0))
+    prepopulate_db(dt(2018, 10, 23, 9, 0, 0), session)
+
+    # when
+    response = client.delete("/measurement/2/plan")
+
+    # then
+    assert response.status_code == 200
+    result = session.query(Measurement).filter(Measurement.id == 2).first()
+    assert result.state == MeasurementState.NEW
+    assert result.planned_at is None

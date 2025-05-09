@@ -164,9 +164,11 @@ class MeasurementService:
 
         # change state back to new
         measurement.state = MeasurementState.NEW
+        measurement.planned_at = None
 
         # remove scheduled job from scheduler
-        self.scheduler.remove_job(measurement.scheduler_job_id)
+        if measurement.scheduler_job_id is not None:
+            self.scheduler.remove_job(measurement.scheduler_job_id)
 
         # save measurement
         measurement = self.__save_measurement(measurement)
