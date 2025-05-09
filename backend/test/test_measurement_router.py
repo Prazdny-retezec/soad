@@ -102,6 +102,32 @@ def test_create_planned_measurement(time_machine: TimeMachineFixture, client: Te
     assert result.state == MeasurementState.PLANNED
 
 
+def test_create_periodic_planned_measurement(time_machine: TimeMachineFixture, client: TestClient, session: Session):
+    # given
+    time_machine.move_to(dt(2015, 10, 21, 7, 0, 0))
+    request = {
+        "name": "Periodic measurement",
+        "description": "testing measurement",
+        "plan_from": "2015-10-23T08:00:00.000",
+        "plan_to": "2015-10-23T10:30:00.000",
+        "period": "PT30M",
+        "ae_delta": "PT1M"
+    }
+
+    # when
+    client.post("/measurement/periodic", json=request)
+
+    # then
+    result = session.query(Measurement).all()
+    assert len(result) == 6
+    assert result[0].planned_at == dt(2015, 10, 23, 8, 0, 0)
+    assert result[1].planned_at == dt(2015, 10, 23, 8, 30, 0)
+    assert result[2].planned_at == dt(2015, 10, 23, 9, 0, 0)
+    assert result[3].planned_at == dt(2015, 10, 23, 9, 30, 0)
+    assert result[4].planned_at == dt(2015, 10, 23, 10, 0, 0)
+    assert result[5].planned_at == dt(2015, 10, 23, 10, 30, 0)
+
+
 def test_update_measurement(time_machine: TimeMachineFixture, client: TestClient, session: Session):
     # given
     time_machine.move_to(dt(2018, 10, 3, 10, 0, 0))

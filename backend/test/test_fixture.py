@@ -46,7 +46,7 @@ def prepopulate_db(base_date: datetime, session: Session):
         {"id": 1, "name": "Measurement 1", "description": "Description of measurement 1", "state": MeasurementState.NEW,
          "planned_at": None, "created_at": base_date + timedelta(days=1)},
         {"id": 2,"name": "Measurement 2", "description": "Description of measurement 2", "state": MeasurementState.PLANNED,
-         "planned_at": base_date + timedelta(hours=2), "created_at": timedelta(days=2)},
+         "planned_at": base_date + timedelta(hours=2), "created_at": base_date + timedelta(days=2)},
         {"id": 3,"name": "Measurement 3", "description": "Description of measurement 3", "state": MeasurementState.DOWNLOADING,
          "planned_at": base_date + timedelta(days=3, hours=1), "created_at": base_date + timedelta(days=2)},
         {"id": 4,"name": "Measurement 4", "description": "Description of measurement 4", "state": MeasurementState.ZIPPING,
