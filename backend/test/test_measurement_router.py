@@ -4,7 +4,8 @@ from fastapi.testclient import TestClient
 from datetime import datetime as dt, timezone
 
 from measurement.model import Measurement, MeasurementState
-from test_fixture import client_fixture, db_session_fixture, prepopulate_db  # import fixtures so pytest can use them
+from test_fixture import client_fixture, db_session_fixture, prepopulate_db, \
+    sensor_settings  # import fixtures so pytest can use them
 from time_machine import TimeMachineFixture
 from sqlalchemy.orm import Session
 
@@ -63,6 +64,8 @@ def test_create_measurement(time_machine: TimeMachineFixture, client: TestClient
     request = {
         "name": "testing_measurement",
         "description": "testing_measurement",
+        "duration": "PT10M",
+        "sensor_settings": sensor_settings
     }
 
     # when
@@ -86,7 +89,9 @@ def test_create_planned_measurement(time_machine: TimeMachineFixture, client: Te
         "name": "testing_measurement",
         "description": "testing_measurement",
         "plan_at": "2015-10-23T07:00:00.000",
-        "ae_delta": "PT3M"
+        "duration": "PT10M",
+        "ae_delta": "PT3M",
+        "sensor_settings": sensor_settings
     }
 
     # when
@@ -112,8 +117,9 @@ def test_create_periodic_planned_measurement(time_machine: TimeMachineFixture, c
         "description": "testing measurement",
         "plan_from": "2015-10-23T08:00:00.000",
         "plan_to": "2015-10-23T10:30:00.000",
-        "period": "PT30M",
-        "ae_delta": "PT1M"
+        "duration": "PT30M",
+        "ae_delta": "PT1M",
+        "sensor_settings": sensor_settings
     }
     client.post("/measurement/periodic", json=request)
 

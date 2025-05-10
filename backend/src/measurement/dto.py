@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
-from measurement.model import MeasurementState, MeasurementResult
+from measurement.model import MeasurementState
+from sensor.dto import SensorSettingsDto
 
 
 class MeasurementResultDto(BaseModel):
@@ -13,7 +14,9 @@ class MeasurementCreateDto(BaseModel):
     name: str
     description: str
     plan_at: datetime | None = None
+    duration: timedelta = timedelta(minutes=10)
     ae_delta: timedelta = timedelta(minutes=3)
+    sensor_settings: SensorSettingsDto
 
     class Config:
         to_attributes = True
@@ -24,8 +27,9 @@ class MeasurementCreatePeriodicDto(BaseModel):
     description: str
     plan_from: datetime | None = None
     plan_to: datetime | None = None
-    period: timedelta | None = None
-    ae_delta: timedelta | None = None
+    duration: timedelta = timedelta(minutes=10)
+    ae_delta: timedelta = timedelta(minutes=3)
+    sensor_settings: SensorSettingsDto
 
     class Config:
         to_attributes = True
@@ -45,8 +49,11 @@ class MeasurementDetailDto(BaseModel):
     planned_at: datetime | None = None
     started_at: datetime | None = None
     ended_at: datetime | None = None
+    ae_delta: timedelta
+    duration: timedelta
     state: MeasurementState
     result: MeasurementResultDto | None = None
+    sensor_settings: SensorSettingsDto
 
 
 class MeasurementListDto(BaseModel):
@@ -55,6 +62,7 @@ class MeasurementListDto(BaseModel):
     created_at: datetime
     planned_at: datetime | None = None
     state: MeasurementState
+    duration: timedelta
 
     class Config:
         from_attributes = True

@@ -36,12 +36,13 @@ class Measurement(Auditable):
     name = Column(String)
     description = Column(String)
     planned_at = Column(DateTime, nullable=True)
-    ae_delta = Column(Interval, nullable=True)
+    duration = Column(Interval)
+    ae_delta = Column(Interval)
     started_at = Column(DateTime, nullable=True)
     ended_at = Column(DateTime, nullable=True)
     state = Column(Enum(MeasurementState), default=MeasurementState.NEW)
     scheduler_job_id = Column(String, nullable=True)
 
     # relationships
-    result = relationship("MeasurementResult", back_populates="measurement",
-                          uselist=False, cascade="all, delete-orphan")
+    result = relationship("MeasurementResult", back_populates="measurement", uselist=False, cascade="all, delete-orphan")
+    sensor_settings = relationship("SensorSettings", back_populates="measurement", uselist=False, cascade="all, delete-orphan")
