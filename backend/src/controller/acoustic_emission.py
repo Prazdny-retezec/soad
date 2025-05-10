@@ -1,7 +1,11 @@
+from datetime import datetime
+
+
 class AcousticEmissionController:
-    def __init__(self, ip_address: str, port: int):
+    def __init__(self, ip_address: str, port: int, output_dir: str):
         self.ip_address = ip_address
         self.port = port
+        self.output_dir = output_dir
 
     def get_sensors(self) -> list[str]:
         pass
@@ -35,3 +39,8 @@ class AcousticEmissionController:
 
     def __call(self):
         pass
+
+    @staticmethod
+    def generate_name() -> str:
+        return "ae_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%SZ") + ".csv"
+
