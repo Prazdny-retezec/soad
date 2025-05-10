@@ -278,18 +278,22 @@ class MeasurementService:
 
     @staticmethod
     def __choose_controllers():
-        if Settings().mock_controller:
-            return {
-                "rgb": RgbCameraMockController,
-                "ms": MultiSpectralCameraMockController,
-                "ae": AcousticEmissionMockController
-            }
-        else:
-            return {
-                "rgb": RgbCameraController,
-                "ms": MultiSpectralCameraController,
-                "ae": AcousticEmissionController
-            }
+        controllers = {
+            "rgb": RgbCameraController,
+            "ms": MultiSpectralCameraController,
+            "ae": AcousticEmissionController
+        }
+
+        if AppSettings.mock_ae:
+            controllers["ae"] = AcousticEmissionMockController
+
+        if AppSettings.mock_rgb:
+            controllers["rgb"] = RgbCameraMockController
+
+        if AppSettings.mock_msc:
+            controllers["ms"] = MultiSpectralCameraMockController
+
+        return controllers
 
     def __save_measurement(self, measurement: Measurement) -> Measurement:
         self.db.add(measurement)
