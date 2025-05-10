@@ -1,6 +1,7 @@
 import os
 import random
 import shutil
+import time
 
 from common.enum import ImageFormat
 from controller.mock import MOCK_DATA_DIR
@@ -9,7 +10,10 @@ from controller.multi_spectral_camera import MultiSpectralCameraController
 
 class MultiSpectralCameraMockController(MultiSpectralCameraController):
 
-    def start_capturing(self, img_format: ImageFormat):
+    def start_capturing(self, img_format: ImageFormat, width: int, height: int, interval: int, exposure_time: int):
+        # mock exposure
+        time.sleep(exposure_time)
+
         path = f"{MOCK_DATA_DIR}/ms"
         files = os.listdir(path)
         file_extension = img_format.value.lower()

@@ -1,8 +1,11 @@
+import os
+
 from fastapi import FastAPI
 
 from measurement.router import router as measurement_router
 from database import Base, engine
 from scheduler import scheduler
+from settings import AppSettings
 
 # BE application instance
 
@@ -48,8 +51,14 @@ app.include_router(measurement_router)
 # TODO replace by non-deprecated feature
 @app.on_event("startup")
 def on_startup():
+    settings = AppSettings()
+
     # create database if not exists
     create_db_and_tables()
+
+    #  check directory for saving data exists and create one if it does not
+    if not os.path.exists(settings.output_dir):
+        os.mkdir(settings.output_dir)
 
     # start task scheduler
     scheduler.start()

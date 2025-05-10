@@ -1,28 +1,23 @@
 import glob
 import logging
 import os
+import threading
 import time
+import uuid
 from datetime import datetime, timedelta
 from typing import List
 
-from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from common.enum import ImageFormat
-from controller.acoustic_emission import AcousticEmissionController
-from controller.mock.acoustic_emission import AcousticEmissionMockController
-from controller.mock.multi_spectral_camera import MultiSpectralCameraMockController
-from controller.mock.rgb_camera import RgbCameraMockController
-from controller.multi_spectral_camera import MultiSpectralCameraController
-from controller.rgb_camera import RgbCameraController
+from controllers import get_acoustic_emission_controller, get_rgb_camera_controller, get_ms_camera_controller
 from database import get_db, sessionLocal
-from scheduler import get_scheduler
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
 from measurement.model import Measurement, MeasurementState, MeasurementResult
+from scheduler import get_scheduler
 from sensor.model import SensorSettings
-from settings import Settings
 
 from google_drive.gdrive_handler import gdrive_auth, upload_zip_file
 from zipper import create_zip_archive
@@ -212,35 +207,37 @@ class MeasurementService:
         measurement.started_at = datetime.now()
         measurement = change_state(measurement, MeasurementState.DOWNLOADING)
 
-        # choose controllers
-        controllers = MeasurementService.__choose_controllers()
-        rgb_camera_class = controllers["rgb"]
-        ms_camera_class = controllers["ms"]
-        ae_class = controllers["ae"]
-
-        # TODO replace time.sleep by multi-threading implementation, start measuring async and after that join threads
-        # and collect all results
         try:
-            # TODO turn on acoustic emission
+            # setup thread for each sensor
+            ae_thread = threading.Thread(
+                target=MeasurementService.acoustic_emission_measuring,
+                args=(measurement.ae_delta, measurement.duration)
+            )
+            rgb_thread = threading.Thread(
+                target=MeasurementService.rgb_camera_measuring,
+                args=(measurement.sensor_settings,)
+            )
+            ms_thread = threading.Thread(
+                target=MeasurementService.ms_camera_measuring,
+                args=(measurement.sensor_settings,)
+            )
+
+            # start acoustic emission
+            ae_thread.start()
+
+            # wait till AE data are collected for ae_delta time
             time.sleep(measurement.ae_delta.seconds)
 
-            # start capturing with multi-spectral camera
-            ms_camera : MultiSpectralCameraController = ms_camera_class(output_dir="/home/petr/Git/soad/backend/test_data")
-            ms_camera.start_capturing(ImageFormat.PNG)
+            # start other sensors
+            ms_thread.start()
+            rgb_thread.start()
 
-            # proceed RGB camera image capture
-            with rgb_camera_class(1920, 1080) as rgb_camera:
-                rgb_camera.capture_image("/home/petr/Git/soad/backend/test_data", 90, ImageFormat.PNG) # TODO change path
+            # wait till all sensors are done
+            ae_thread.join()
+            rgb_thread.join()
+            ms_thread.join()
 
-            # acoustic emission time delta wait
-            time.sleep(measurement.ae_delta.seconds)
-            # TODO stop acoustic emission
-
-            # stop MS camera capturing
-            ms_camera.stop_capturing()
-
-            # TODO collect data from acoustic emission
-
+            # zip produced data files
             logging.info(f"Zipping measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.ZIPPING)
 
@@ -248,10 +245,10 @@ class MeasurementService:
             zip_file_name = f"/home/petr/Git/soad/backend/test_data/{measurement_id}.zip"
             create_zip_archive(files_to_zip, zip_file_name)
 
+            # upload zipped files to google drive
             logging.info(f"Uploading measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.UPLOADING)
 
-            # upload zipped files to google drive
             gdrive_service = gdrive_auth()
             gdrive_url = upload_zip_file(gdrive_service, path_to_local_zip_file = zip_file_name, gdrive_file_name = measurement.name)
 
@@ -277,23 +274,44 @@ class MeasurementService:
             db.close()
 
     @staticmethod
-    def __choose_controllers():
-        controllers = {
-            "rgb": RgbCameraController,
-            "ms": MultiSpectralCameraController,
-            "ae": AcousticEmissionController
-        }
+    def acoustic_emission_measuring(ae_delta: timedelta, duration: timedelta):
+        with get_acoustic_emission_controller() as acoustic_emission:
+            # TODO emission.configure() -> SensorSettings
+            acoustic_emission.start_recording(str(uuid.uuid4()), 0)
+            # beginning of acoustic emission collection (before cameras)
+            time.sleep(ae_delta.seconds)
 
-        if AppSettings.mock_ae:
-            controllers["ae"] = AcousticEmissionMockController
+            # measuring itself
+            time.sleep(duration.seconds)
 
-        if AppSettings.mock_rgb:
-            controllers["rgb"] = RgbCameraMockController
+            # end of acoustic emission measuring (after cameras)
+            time.sleep(ae_delta.seconds)
 
-        if AppSettings.mock_msc:
-            controllers["ms"] = MultiSpectralCameraMockController
+            # saving measured data to csv file
+            acoustic_emission.stop_recording()
 
-        return controllers
+    @staticmethod
+    def rgb_camera_measuring(sensors: SensorSettings):
+        with get_rgb_camera_controller(width=sensors.rgb_image_width, height=sensors.rgb_image_height) as rgb_camera:
+            for i in range(0, sensors.rgb_image_count):
+                rgb_camera.capture_image(quality=sensors.rgb_image_quality, img_format=sensors.rgb_image_format)
+                time.sleep(sensors.rgb_sampling_delay)
+
+    @staticmethod
+    def ms_camera_measuring(sensors: SensorSettings):
+        ms_camera = get_ms_camera_controller()
+
+        for i in range(0, sensors.ms_image_count):
+            ms_camera.start_capturing(
+                img_format=ImageFormat.PNG,
+                width=sensors.ms_image_width,
+                height=sensors.ms_image_height,
+                interval=sensors.ms_sampling_delay,
+                exposure_time=sensors.ms_exposure_time
+            )
+
+            ms_camera.stop_capturing()
+            time.sleep(sensors.ms_sampling_delay)
 
     def __save_measurement(self, measurement: Measurement) -> Measurement:
         self.db.add(measurement)

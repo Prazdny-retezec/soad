@@ -32,9 +32,11 @@ class AcousticEmissionController:
         pass
 
     def __enter__(self):
-        pass
+        # TODO connect via Socket
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
+        # TODO kill socket
         pass
 
     def __call(self):
@@ -43,4 +45,3 @@ class AcousticEmissionController:
     @staticmethod
     def generate_name() -> str:
         return "ae_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%SZ") + ".csv"
-

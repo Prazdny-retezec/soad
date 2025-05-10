@@ -7,7 +7,8 @@ from pypylon import pylon
 
 
 class RgbCameraController:
-    def __init__(self, width: int, height: int):
+    def __init__(self, output_dir: str, width: int, height: int):
+        self.output_dir = output_dir
         self.width = width
         self.height = height
         self.device: pylon.InstantCamera | None = None
@@ -15,15 +16,11 @@ class RgbCameraController:
     def is_available(self) -> bool:
         return self.device is not None
 
-    def capture_image(self, output_dir: str, quality: int, img_format: ImageFormat):
+    def capture_image(self, quality: int, img_format: ImageFormat):
         logging.debug("Capturing started")
 
         if not self.is_available():
             raise RuntimeError("Unable to capture image - camera is not available")
-
-        # check directory and create one if it does not exist
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
 
         # setup config for image capturing
         image = pylon.PylonImage()
@@ -36,7 +33,7 @@ class RgbCameraController:
             image.AttachGrabResultBuffer(result)
 
             # create filename
-            filename = output_dir + "/" + self.generate_name(img_format)
+            filename = os.path.join(self.output_dir, self.generate_name(img_format))
 
             # check if target format is supported and if so save the image to disk
             if img_format == ImageFormat.PNG:
