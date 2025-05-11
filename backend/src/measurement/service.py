@@ -21,6 +21,7 @@ from database import get_db, sessionLocal
 from scheduler import get_scheduler
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
 from measurement.model import Measurement, MeasurementState, MeasurementResult
+from sensor.model import SensorSettings
 from settings import Settings
 
 from google_drive.gdrive_handler import gdrive_auth, upload_zip_file
@@ -60,8 +61,10 @@ class MeasurementService:
             description=dto.description,
             planned_at=dto.plan_at,
             ae_delta=dto.ae_delta,
+            duration=dto.duration,
             state=MeasurementState.NEW,
         )
+        measurement.sensor_settings = dto.sensor_settings.to_entity()
 
         # TODO validation
 
@@ -81,9 +84,10 @@ class MeasurementService:
 
         current_time = dto.plan_from
         while current_time <= dto.plan_to:
-            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description, plan_at=current_time, ae_delta=dto.ae_delta)
+            single_dto = MeasurementCreateDto(name=dto.name, description=dto.description, plan_at=current_time,
+                                              ae_delta=dto.ae_delta, duration=dto.duration, sensor_settings=dto.sensor_settings)
             measurements.append(self.create_measurement(single_dto))
-            current_time += dto.period
+            current_time += dto.duration
 
         return measurements
 

@@ -9,6 +9,26 @@ from fastapi.testclient import TestClient
 from main import app
 from database import Base, get_db
 from measurement.model import Measurement, MeasurementState
+from sensor.dto import SensorSettingsDto
+
+sensor_settings = {
+    "rgb_image_quality": 90,
+    "rgb_image_count": 5,
+    "rgb_image_width": 1920,
+    "rgb_image_height": 1080,
+    "rgb_sampling_delay": 2,
+    "rgb_image_format": "TIFF",
+    "ms_image_count": 2,
+    "ms_image_width": 1920,
+    "ms_image_height": 1080,
+    "ms_sampling_delay": 5,
+    "ms_image_format": "TIFF",
+    "ae_voltage_format": 5,
+    "ae_voltage_dbae": 1,
+    "ae_counts_log": 1,
+    "ae_counts_lin": 1,
+    "ae_energy_format": 1
+}
 
 
 # for testing purposes create connection to SQLite database
@@ -45,23 +65,23 @@ def prepopulate_db(base_date: datetime, session: Session):
     static_data = [
         {"id": 1, "name": "Measurement 1", "description": "Description of measurement 1", "state": MeasurementState.NEW,
          "planned_at": None, "created_at": base_date + timedelta(days=1)},
-        {"id": 2,"name": "Measurement 2", "description": "Description of measurement 2", "state": MeasurementState.PLANNED,
+        {"id": 2, "name": "Measurement 2", "description": "Description of measurement 2", "state": MeasurementState.PLANNED,
          "planned_at": base_date + timedelta(hours=2), "created_at": base_date + timedelta(days=2)},
         {"id": 3,"name": "Measurement 3", "description": "Description of measurement 3", "state": MeasurementState.DOWNLOADING,
          "planned_at": base_date + timedelta(days=3, hours=1), "created_at": base_date + timedelta(days=2)},
-        {"id": 4,"name": "Measurement 4", "description": "Description of measurement 4", "state": MeasurementState.ZIPPING,
+        {"id": 4, "name": "Measurement 4", "description": "Description of measurement 4", "state": MeasurementState.ZIPPING,
          "planned_at": base_date + timedelta(days=4), "created_at": base_date + timedelta(days=4)},
-        {"id": 5,"name": "Measurement 5", "description": "Description of measurement 5", "state": MeasurementState.UPLOADING,
+        {"id": 5, "name": "Measurement 5", "description": "Description of measurement 5", "state": MeasurementState.UPLOADING,
          "planned_at": base_date + timedelta(days=5), "created_at": base_date + timedelta(days=5)},
-        {"id": 6,"name": "Measurement 6", "description": "Description of measurement 6", "state": MeasurementState.ERROR,
+        {"id": 6, "name": "Measurement 6", "description": "Description of measurement 6", "state": MeasurementState.ERROR,
          "planned_at": base_date + timedelta(days=6), "created_at": base_date + timedelta(days=6)},
-        {"id": 7,"name": "Measurement 7", "description": "Description of measurement 7", "state": MeasurementState.FINISHED,
+        {"id": 7, "name": "Measurement 7", "description": "Description of measurement 7", "state": MeasurementState.FINISHED,
          "planned_at": base_date + timedelta(days=7), "created_at": base_date + timedelta(days=7)},
-        {"id": 8,"name": "Measurement 8", "description": "Description of measurement 8", "state": MeasurementState.NEW,
+        {"id": 8, "name": "Measurement 8", "description": "Description of measurement 8", "state": MeasurementState.NEW,
          "planned_at": base_date + timedelta(days=8), "created_at": base_date + timedelta(days=8)},
         {"id": 9,"name": "Measurement 9", "description": "Description of measurement 9", "state": MeasurementState.PLANNED,
          "planned_at": base_date + timedelta(days=9), "created_at": base_date + timedelta(days=9)},
-        {"id": 10,"name": "Measurement 10", "description": "Description of measurement 10",
+        {"id": 10, "name": "Measurement 10", "description": "Description of measurement 10",
          "state": MeasurementState.DOWNLOADING, "planned_at": base_date + timedelta(days=10),
          "created_at": base_date + timedelta(days=10)},
     ]
@@ -85,8 +105,10 @@ def prepopulate_db(base_date: datetime, session: Session):
             started_at=started_at,
             ended_at=ended_at,
             state=measurement["state"],
+            duration=timedelta(seconds=10),
             scheduler_job_id=None
         )
+        measurement.sensor_settings = SensorSettingsDto(**sensor_settings).to_entity()
         session.add(measurement)
 
     session.commit()
