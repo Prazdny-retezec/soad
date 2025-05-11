@@ -11,14 +11,20 @@ router = APIRouter(
 )
 
 
-@router.get("")
+@router.get("",
+    summary="Získat seznam měření",
+    description="Vrací seznam všech uložených měření."
+            )
 async def list_measurements(
         service: MeasurementService = Depends(MeasurementService)
 ) -> List[MeasurementListDto]:
     return service.list_measurements()
 
 
-@router.get("/{id}")
+@router.get("/{id}",
+    summary="Získat detail měření",
+    description="Vrací detailní informace o měření podle zadaného ID."
+            )
 async def get_measurement(
         id: int,
         service: MeasurementService = Depends(MeasurementService)
@@ -26,7 +32,10 @@ async def get_measurement(
     return service.get_measurement(id)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED,
+    summary="Vytvořit nové měření",
+    description="Vytvoří nové měření na základě vstupních dat a vrátí jeho přehled."
+             )
 async def create_measurement(
         dto: MeasurementCreateDto,
         service: MeasurementService = Depends(MeasurementService)
@@ -34,7 +43,10 @@ async def create_measurement(
     return service.create_measurement(dto)
 
 
-@router.post("/periodic", status_code=status.HTTP_201_CREATED)
+@router.post("/periodic", status_code=status.HTTP_201_CREATED,
+    summary="Vytvořit periodická měření",
+    description="Na základě vstupních dat vytvoří více měření v pravidelných intervalech."
+             )
 async def create_periodic_measurement(
         dto: MeasurementCreatePeriodicDto,
         service: MeasurementService = Depends(MeasurementService)
@@ -42,7 +54,10 @@ async def create_periodic_measurement(
     return service.create_periodic_measurement(dto)
 
 
-@router.put("/{id}", status_code=status.HTTP_202_ACCEPTED)
+@router.put("/{id}", status_code=status.HTTP_202_ACCEPTED,
+    summary="Aktualizovat měření",
+    description="Upraví existující měření podle ID a dodaných aktualizačních dat."
+            )
 async def update_measurement(
         id: int,
         dto: MeasurementUpdateDto,
@@ -51,17 +66,26 @@ async def update_measurement(
     return service.update_measurement(id, dto)
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT,
+    summary="Smazat měření",
+    description="Smaže měření se zadaným ID."
+               )
 async def delete_measurement(id: int, service: MeasurementService = Depends(MeasurementService)):
     service.delete_measurement(id)
 
 
-@router.post("/{id}/plan", status_code=status.HTTP_200_OK)
+@router.post("/{id}/plan", status_code=status.HTTP_200_OK,
+    summary="Naplánovat měření",
+    description="Naplánuje měření na zvolený čas s volitelnou odchylkou."
+             )
 async def plan_measurement(id: int, dto: MeasurementPlanDto, service: MeasurementService = Depends(MeasurementService)):
     service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
 
 
-@router.delete("/{id}/plan", status_code=status.HTTP_200_OK)
+@router.delete("/{id}/plan", status_code=status.HTTP_200_OK,
+    summary="Zrušit plánování měření",
+    description="Zruší naplánování konkrétního měření."
+               )
 async def unplan_measurement(id: int, service: MeasurementService = Depends(MeasurementService)):
     service.unplan_measurement(id)
 
