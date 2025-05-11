@@ -1,4 +1,6 @@
+import glob
 import logging
+import os
 import time
 from datetime import datetime, timedelta
 from typing import List
@@ -21,6 +23,8 @@ from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, Measurem
 from measurement.model import Measurement, MeasurementState, MeasurementResult
 from settings import Settings
 
+from google_drive.gdrive_handler import gdrive_auth, upload_zip_file
+from zipper import create_zip_archive
 
 class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
@@ -193,14 +197,14 @@ class MeasurementService:
 
             return mes
 
-        logging.debug(f"Starting measurement for {measurement_id}")
+        logging.info(f"Starting measurement for {measurement_id}")
         measurement = db.query(Measurement).filter(Measurement.id == measurement_id).first()
 
         if measurement is None or measurement.state != MeasurementState.PLANNED:
             logging.warn(f"Missing measurement with id: {measurement_id}")
             return
 
-        logging.debug(f"Downloading for measurement {measurement_id}")
+        logging.info(f"Downloading for measurement {measurement_id}")
         measurement.started_at = datetime.now()
         measurement = change_state(measurement, MeasurementState.DOWNLOADING)
 
@@ -233,24 +237,34 @@ class MeasurementService:
 
             # TODO collect data from acoustic emission
 
-            logging.debug(f"Zipping measurement {measurement_id}")
-            time.sleep(3)
+            logging.info(f"Zipping measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.ZIPPING)
-            # TODO zip data together
 
-            logging.debug(f"Uploading measurement {measurement_id}")
-            time.sleep(3)
+            files_to_zip = glob.glob("/home/petr/Git/soad/backend/test_data/*")
+            zip_file_name = f"/home/petr/Git/soad/backend/test_data/{measurement_id}.zip"
+            create_zip_archive(files_to_zip, zip_file_name)
+
+            logging.info(f"Uploading measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.UPLOADING)
-            # TODO upload data to cloud
 
-            # TODO use actual result and actual cloud URL
-            logging.debug(f"Finishing measurement {measurement_id}")
+            # upload zipped files to google drive
+            gdrive_service = gdrive_auth()
+            gdrive_url = upload_zip_file(gdrive_service, path_to_local_zip_file = zip_file_name, gdrive_file_name = measurement.name)
+
+            logging.info(f"Finishing measurement {measurement_id}")
             measurement.result = MeasurementResult(
-                cloud_url="https://www.icegif.com/wp-content/uploads/2023/01/icegif-162.gif",
+                cloud_url=gdrive_url,
                 measurement_id=measurement_id
             )
             measurement.finished_at = datetime.now()
             measurement = change_state(measurement, MeasurementState.FINISHED)
+
+            # delete uploaded files
+            files_to_delete = glob.glob("/home/petr/Git/soad/backend/test_data/*")
+            for file in files_to_delete:
+                os.remove(file)
+                logging.info(f"Deleted file: {file}")
+
         except Exception as e:
             logging.error(e)
             measurement.result = MeasurementResult(error=str(e), measurement_id=measurement_id)
