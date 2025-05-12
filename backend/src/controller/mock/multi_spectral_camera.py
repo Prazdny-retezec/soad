@@ -14,7 +14,7 @@ class MultiSpectralCameraMockController(MultiSpectralCameraController):
         # mock exposure
         time.sleep(exposure_time)
 
-        path = f"{MOCK_DATA_DIR}/ms"
+        path = os.path.join(MOCK_DATA_DIR, "ms")
         files = os.listdir(path)
         file_extension = img_format.value.lower()
 

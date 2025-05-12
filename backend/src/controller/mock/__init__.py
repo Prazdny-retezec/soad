@@ -1,1 +1,3 @@
-MOCK_DATA_DIR = "/home/petr/Git/soad/backend/mock_data" # # TODO change path
+import os
+
+MOCK_DATA_DIR = os.path.abspath("../mock_data/")

@@ -20,7 +20,9 @@ from scheduler import get_scheduler
 from sensor.model import SensorSettings
 
 from google_drive.gdrive_handler import gdrive_auth, upload_zip_file
+from settings import AppSettings
 from zipper import create_zip_archive
+
 
 class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
@@ -158,7 +160,7 @@ class MeasurementService:
             # save updated measurement
             measurement = self.__save_measurement(measurement)
 
-            logging.debug(f"Planned execution of measurement at {plan_at}")
+            logging.info(f"Planned execution of measurement at {plan_at}")
         except Exception as e:
             logging.error(e)
             measurement.state = MeasurementState.ERROR
@@ -187,6 +189,7 @@ class MeasurementService:
     async def proceed_measuring(measurement_id: int):
         # must have explicitly declared session due to serialization of job
         db = sessionLocal()
+        app_settings = AppSettings()
 
         def change_state(mes: Measurement, state: MeasurementState) -> Measurement:
             mes.state = state
@@ -241,8 +244,8 @@ class MeasurementService:
             logging.info(f"Zipping measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.ZIPPING)
 
-            files_to_zip = glob.glob("/home/petr/Git/soad/backend/test_data/*")
-            zip_file_name = f"/home/petr/Git/soad/backend/test_data/{measurement_id}.zip"
+            files_to_zip = glob.glob(app_settings.output_dir + "/*")
+            zip_file_name = os.path.join(app_settings.output_dir, f"{measurement_id}.zip")
             create_zip_archive(files_to_zip, zip_file_name)
 
             # upload zipped files to google drive
@@ -250,7 +253,11 @@ class MeasurementService:
             measurement = change_state(measurement, MeasurementState.UPLOADING)
 
             gdrive_service = gdrive_auth()
-            gdrive_url = upload_zip_file(gdrive_service, path_to_local_zip_file = zip_file_name, gdrive_file_name = measurement.name)
+            gdrive_url = upload_zip_file(
+                gdrive_service=gdrive_service,
+                path_to_local_zip_file=zip_file_name,
+                gdrive_file_name=measurement.name
+            )
 
             logging.info(f"Finishing measurement {measurement_id}")
             measurement.result = MeasurementResult(
@@ -261,7 +268,7 @@ class MeasurementService:
             measurement = change_state(measurement, MeasurementState.FINISHED)
 
             # delete uploaded files
-            files_to_delete = glob.glob("/home/petr/Git/soad/backend/test_data/*")
+            files_to_delete = glob.glob(app_settings.output_dir + "/*")
             for file in files_to_delete:
                 os.remove(file)
                 logging.info(f"Deleted file: {file}")

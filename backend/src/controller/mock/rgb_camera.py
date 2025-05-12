@@ -11,7 +11,7 @@ class RgbCameraMockController(RgbCameraController):
         return True
 
     def capture_image(self, quality: int, img_format: ImageFormat):
-        path = f"{MOCK_DATA_DIR}/rgb"
+        path = os.path.join(MOCK_DATA_DIR, "rgb")
         files = os.listdir(path)
         file_extension = img_format.value.lower()
 
