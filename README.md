@@ -27,5 +27,4 @@ Další použité technologie:
 
 ## Dokumentace
 
-[//]: # (TODO: link to programmer manual)
-- Programátorská příručka
+- [Programátorská příručka](./docs/cz/programmer.md)
