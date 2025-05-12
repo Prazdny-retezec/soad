@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Interval
+from sqlalchemy import Column, Integer, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from common.enum import ImageFormat
@@ -24,6 +24,7 @@ class SensorSettings(Base):
     ms_image_width = Column(Integer)
     ms_image_height = Column(Integer)
     ms_sampling_delay = Column(Integer)
+    ms_exposure_time = Column(Integer)
     ms_image_format = Column(Enum(ImageFormat))
 
     # acoustic emission

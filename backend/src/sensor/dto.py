@@ -18,6 +18,7 @@ class SensorSettingsDto(BaseModel):
     ms_image_width: int = 1920
     ms_image_height: int = 1080
     ms_sampling_delay: int = 5
+    ms_exposure_time: int = 60
     ms_image_format: ImageFormat = ImageFormat.TIFF
 
     # acoustic emission
@@ -40,6 +41,7 @@ class SensorSettingsDto(BaseModel):
             ms_image_width=self.ms_image_width,
             ms_image_height=self.ms_image_height,
             ms_sampling_delay=self.ms_sampling_delay,
+            ms_exposure_time=self.ms_exposure_time,
             ms_image_format=ImageFormat[self.ms_image_format],
 
             ae_voltage_format=self.ae_voltage_format,
