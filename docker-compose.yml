@@ -19,6 +19,8 @@ services:
       - DATABASE_URL=postgresql://api:changeit@database:5432/soad
       - SECRET=top_super_secret
       - OUTPUT_DIR=/data
+      - AE_IP_ADDRESS=127.0.0.1
+      - AE_PORT=40999
       - MOCK_ACOUSTIC_EMISSION=True
       - MOCK_RGB_CAMERA=True
       - MOCK_MULTI_SPECTRAL_CAMERA=True
