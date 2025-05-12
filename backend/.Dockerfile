@@ -12,5 +12,8 @@ RUN pip3 install -r requirements.txt
 # copy source code
 COPY src/ .
 
+# copy mock data
+COPY mock_data/ mock_data/
+
 # run application
 CMD ["fastapi", "run", "/src/main.py", "--port", "80"]
