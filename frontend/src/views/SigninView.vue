@@ -100,6 +100,8 @@ export default {
       }
     },
 
+    
+
     clear () {
       this.$refs.form.reset()
       this.firstName = ''

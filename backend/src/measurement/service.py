@@ -28,6 +28,14 @@ class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
         self.db = db
         self.scheduler = scheduler
+        
+    def check_for_conflicting_measurements(self, plan_from: datetime) -> bool:
+        # Kontrola, zda již existuje měření s daným časem
+        conflict = self.db.query(Measurement).filter(
+            (Measurement.deleted_at.is_(None)) &
+            (Measurement.planned_at == plan_from)  # Kontrola, zda se čas naplánovaného měření shoduje
+        ).first()
+        return conflict is not None
 
     def get_measurement(self, measurement_id: int) -> Measurement:
         query = self.db.query(Measurement).filter(
@@ -326,3 +334,12 @@ class MeasurementService:
         self.db.refresh(measurement)
 
         return measurement
+
+    def _is_time_taken(self, plan_at: datetime) -> bool:
+        # Check if any existing measurement overlaps with the given time
+        overlapping_measurement = self.db.query(Measurement).filter(
+            Measurement.deleted_at.is_(None),
+            Measurement.planned_at == plan_at
+        ).first()
+
+        return overlapping_measurement is not None

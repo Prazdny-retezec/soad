@@ -59,6 +59,7 @@ class MeasurementDetailDto(BaseModel):
 class MeasurementListDto(BaseModel):
     id: int
     name: str
+    description: str | None
     created_at: datetime
     planned_at: datetime | None = None
     state: MeasurementState

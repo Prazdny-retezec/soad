@@ -20,7 +20,7 @@ export default {
     ...mapStores(useUserStore),
 
     isAuthenticated() {
-      return useUserStore().isAuthenticated
+      return this.userStore?.isAuthenticated; 
     },
   },
   data () {
