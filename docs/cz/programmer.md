@@ -70,16 +70,45 @@ py -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Poté je nutné spustit `main.py` soubor:
+Dále je nutné přejmenovat soubor `soad/backend/.env.example` na `soad/backend/.env`.
+
+Poté můžeme spustit `main.py` soubor:
 
 ```bash
-python3 src/main.py
+fastapi dev src/main.py
 # Windows
 # py src/main.py
 ```
 
-Po krátké době se spustí FastAPI aplikace na adrese [http://localhost:5001](http://localhost:5001).
+Po krátké době se vytvoří FastAPI aplikace a poběží na adrese [http://localhost:5001](http://localhost:5001).
 
-## Frontend
+Na [http://localhost:5001/docs](http://localhost:5001/docs) poběží Swagger dokumentace s popisem endpointů.
 
-TODO
+### Frontend
+
+Nejprve je nutné nainstalovat potřebné závislosti:
+
+```bash
+# soad/frontend/
+npm install
+```
+
+Dál je nutné přejmenovat soubor `soad/frontend/.env.example` na `soad/frontend/.env` a následně spustit Vite dev server:
+
+```bash
+npm run dev
+```
+
+Aplikace by měla poběžet na adrese [http://localhost:5000](http://localhost:5000).
+
+### docker-compose
+
+Pro otestování aplikace v kontejnerech je nutné spustit níže uvedené příkazy:
+
+```bash
+docker-compose build
+docker-compose up
+
+# Vypne kontejnery
+docker-compose down
+```
