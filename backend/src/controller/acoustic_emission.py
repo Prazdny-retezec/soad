@@ -3,8 +3,6 @@ from datetime import datetime
 import socket
 import json
 
-#TODO error validation either via response operation status parameter or something else
-
 class AcousticEmissionController:
 
     def __init__(self, ip_address: str, port: int, output_dir: str):
@@ -31,8 +29,8 @@ class AcousticEmissionController:
         response_string = self.__call("GetSystemTime")
         response_dict = json.loads(response_string)
         return response_dict["result"]["gtime"]
-    #https://bitbucket.org/dakel/node-zedo-rpc/src/master/API.md#configure
-    def configure(self, config: str): #config by mal byt imo objekt, TODO prerobit
+
+    def configure(self, config: str):
         params = {
             "config": config,
             "verbosity": "all",
@@ -52,9 +50,7 @@ class AcousticEmissionController:
     def stop_recording(self):
         self.__call("StopRecording")
     
-    def export_ae_data(self):
-        #TODO imo treba file reader setup, z GetFileReaderData sa pravdepodobne ziska ten name
-        '''
+    def export_file_reader_data(self, reader_id:int, subdir:str, export_cfg:object, make_unique_dir:bool):
         params = {
             "reader_id": reader_id,
             "outdir": self.output_dir,
@@ -63,7 +59,7 @@ class AcousticEmissionController:
             "make_unique_dir": make_unique_dir,
         }
         self.__call("ExportFileReaderData", params=params)
-        '''
+        
     def get_recording_state(self) -> str:
         response_string = self.__call("GetRecordingState")
         response_dict = json.loads(response_string)
@@ -79,26 +75,16 @@ class AcousticEmissionController:
         pass
 
     def __call(self, method, id = 1, params = {}):
-        #yoink 
-        # Vytvoření slovníku s hodnotami pro volání
         call_values = {
             'jsonrpc': '2.0', 
             'method': method, 
             'id': id,
             "params": params
         }
-
-        # Převod slovníku na řetězec JSON
         json_string = json.dumps(call_values)
-
-        # Převod řetězce JSON na bajty
         bytes_to_send = json_string.encode('utf-8')    
-
-        # Odeslání bajtů přes socket
         self.client_socket.send(bytes_to_send)
-        response = self.client_socket.recv(4096)  # Přečte až 4096 bajtů (můžete upravit podle potřeby)
-
-        # Převod bajtů na řetězec
+        response = self.client_socket.recv(4096) 
         response_string = response.decode('utf-8')   
         return response_string 
 
