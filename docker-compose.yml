@@ -9,6 +9,8 @@ services:
         VITE_ADMIN_PASSWORD: admin
         VITE_API_URL: http://localhost:5001
     container_name: soad-fe
+    environment:
+      - TZ=Europe/Prague
     ports:
       - "5000:80"
 
@@ -20,6 +22,7 @@ services:
     depends_on:
       - database
     environment:
+      - TZ=Europe/Prague
       - DATABASE_URL=postgresql://api:changeit@database:5432/soad
       - SECRET=top_super_secret
       - GDRIVE_CREDENTIALS_DIR=./google_drive
@@ -41,6 +44,7 @@ services:
     ports:
       - "5002:5432"
     environment:
+      TZ: Europe/Prague
       PGDATA: /var/lib/postgresql/data/db-files/
       POSTGRES_DB: soad
       POSTGRES_USER: api
