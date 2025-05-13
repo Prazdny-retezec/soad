@@ -4,6 +4,10 @@ services:
     build:
       context: frontend
       dockerfile: .Dockerfile
+      args:
+        VITE_ADMIN_USERNAME: admin
+        VITE_ADMIN_PASSWORD: admin
+        VITE_API_URL: http://localhost:5001
     container_name: soad-fe
     ports:
       - "5000:80"
@@ -18,9 +22,11 @@ services:
     environment:
       - DATABASE_URL=postgresql://api:changeit@database:5432/soad
       - SECRET=top_super_secret
+      - GDRIVE_CREDENTIALS_DIR=./google_drive
       - OUTPUT_DIR=/data
       - AE_IP_ADDRESS=127.0.0.1
       - AE_PORT=40999
+      - MOCK_DATA_DIR=/mock_data
       - MOCK_ACOUSTIC_EMISSION=True
       - MOCK_RGB_CAMERA=True
       - MOCK_MULTI_SPECTRAL_CAMERA=True
