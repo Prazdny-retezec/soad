@@ -1,15 +1,27 @@
 from typing import List
+import logging
 from fastapi import APIRouter, status, Depends
-
+from fastapi import HTTPException
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto, \
     MeasurementCreatePeriodicDto, MeasurementPlanDto
 from measurement.service import MeasurementService
+from fastapi import APIRouter, Depends
+from datetime import datetime
 
 router = APIRouter(
     prefix="/measurement",
     tags=["Measurement"],
 )
 
+@router.get("/conflict")
+async def check_conflict(planFrom: str, service: MeasurementService = Depends(MeasurementService)):
+    # Převeďte přijatý čas na datetime
+    plan_from = datetime.fromisoformat(planFrom)
+
+    # Kontrola konfliktu
+    conflict = service.check_for_conflicting_measurements(plan_from)
+
+    return {"conflict": conflict}
 
 @router.get("",
     summary="Získat seznam měření",
@@ -79,7 +91,8 @@ async def delete_measurement(id: int, service: MeasurementService = Depends(Meas
     description="Naplánuje měření na zvolený čas s volitelnou odchylkou."
              )
 async def plan_measurement(id: int, dto: MeasurementPlanDto, service: MeasurementService = Depends(MeasurementService)):
-    service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
+    print(f"Planning measurement {id} with data: {dto.plan_at}, {dto.ae_delta}")
+    return service.plan_measurement(id, plan_at=dto.plan_at, ae_delta=dto.ae_delta)
 
 
 @router.delete("/{id}/plan", status_code=status.HTTP_200_OK,

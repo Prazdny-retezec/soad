@@ -20,10 +20,10 @@
       </v-form>
 
       <br>
-      <div align="center" justify="center">
+      <!-- <div align="center" justify="center">
         Don't have an account?<br>
         <v-btn class="mt-1" rounded="xl" flat variant="outlined" color="dark-green" :to="{name: 'signin'}">Create new account</v-btn>
-      </div>
+      </div> -->
     </v-card>
   </div>
 </template>
@@ -51,17 +51,33 @@ export default {
   },
 
   methods: {
-    async login(){
-      await this.$refs.form.validate();
-      if (!this.formValid) return;
+  // async login(){
+  //   await this.$refs.form.validate();
+  //   if (!this.formValid) return;
 
-      await useUserStore().login(this.username, this.password)
+  //   await useUserStore().login(this.username, this.password)
 
-      if (!useUserStore().error) {
-        this.$router.push(useUserStore().afterLoginRoute ?? {name: 'home'})
-        useUserStore().setAfterLoginRoute(null)
+  //   if (!useUserStore().error) {
+  //     this.$router.push(useUserStore().afterLoginRoute ?? {name: 'home'})
+  //     useUserStore().setAfterLoginRoute(null)
+  //   }
+  // }
+  login() {
+      
+      // this.$refs.form.validate();
+      // if (!this.formValid) return;
+
+      const envUsername = import.meta.env.VITE_ADMIN_USERNAME;
+      const envPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+      console.log(envPassword, envUsername)
+      console.log(this.username, this.password)
+      if (this.username === envUsername && this.password === envPassword) {
+        this.userStore.login();
+        this.$router.push({ name: 'home' });
+      } else {
+        alert("Invalid credentials");
       }
-    }
+    },
   }
 }
 </script>
