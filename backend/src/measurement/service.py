@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import logging
 import os
@@ -28,7 +29,7 @@ class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
         self.db = db
         self.scheduler = scheduler
-        
+
     def check_for_conflicting_measurements(self, plan_from: datetime) -> bool:
         # Kontrola, zda již existuje měření s daným časem
         conflict = self.db.query(Measurement).filter(
@@ -193,8 +194,13 @@ class MeasurementService:
         measurement = self.__save_measurement(measurement)
         return measurement
 
-    @staticmethod  # must be static due to serialization of job
+    @staticmethod
     async def proceed_measuring(measurement_id: int):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, MeasurementService._proceed_measuring_sync, measurement_id)
+
+    @staticmethod  # must be static due to serialization of job
+    def _proceed_measuring_sync(measurement_id: int):
         # must have explicitly declared session due to serialization of job
         db = sessionLocal()
         app_settings = AppSettings()

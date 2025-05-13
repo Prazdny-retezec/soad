@@ -1,9 +1,10 @@
 from common.enum import ImageFormat
-from controller.mock import MOCK_DATA_DIR
 from controller.rgb_camera import RgbCameraController
 import os
 import random
 import shutil
+
+from settings import AppSettings
 
 
 class RgbCameraMockController(RgbCameraController):
@@ -11,7 +12,7 @@ class RgbCameraMockController(RgbCameraController):
         return True
 
     def capture_image(self, quality: int, img_format: ImageFormat):
-        path = os.path.join(MOCK_DATA_DIR, "rgb")
+        path = os.path.join(AppSettings().mock_data_dir, "rgb")
         files = os.listdir(path)
         file_extension = img_format.value.lower()
 

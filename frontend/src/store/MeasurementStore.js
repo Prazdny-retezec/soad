@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import config from '@/config';
-axios.defaults.baseURL = 'http://localhost:5001'; // or the correct backend URL
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
 export const useMeasurementStore = defineStore('measurement', {
   state: () => ({
