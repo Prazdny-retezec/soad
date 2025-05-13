@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -127,8 +128,11 @@ class MeasurementService:
 
         # remove run of planned job
         if measurement.scheduler_job_id is not None:
-            self.scheduler.remove_job(measurement.scheduler_job_id)
-            measurement.scheduler_job_id = None
+            try:
+                self.scheduler.remove_job(measurement.scheduler_job_id)
+                measurement.scheduler_job_id = None
+            except JobLookupError as e:
+                logging.warning(e)
 
         # soft delete
         measurement.deleted_at = datetime.now()
