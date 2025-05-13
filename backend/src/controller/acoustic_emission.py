@@ -41,6 +41,7 @@ class AcousticEmissionController:
         params = {
             "measurement_name": measurement_name,
             "record_history_secs": record_history_secs,
+            "path": self.output_dir # if this is not supported, set measurement_name to desired output filename with absolute path
         }
         self.__call("StartRecording", params=params)
 
@@ -49,16 +50,6 @@ class AcousticEmissionController:
 
     def stop_recording(self):
         self.__call("StopRecording")
-    
-    def export_file_reader_data(self, reader_id:int, subdir:str, export_cfg:object, make_unique_dir:bool):
-        params = {
-            "reader_id": reader_id,
-            "outdir": self.output_dir,
-            "subdir": subdir,
-            "export_cfg": export_cfg,
-            "make_unique_dir": make_unique_dir,
-        }
-        self.__call("ExportFileReaderData", params=params)
         
     def get_recording_state(self) -> str:
         response_string = self.__call("GetRecordingState")
