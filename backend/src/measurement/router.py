@@ -5,10 +5,11 @@ from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, Measurem
     MeasurementCreatePeriodicDto, MeasurementPlanDto
 from measurement.service import MeasurementService
 
+
 router = APIRouter(
     prefix="/measurement",
-    tags=["Measurement"],
-)
+    tags=["Measurement"]
+    )
 
 
 @router.get("",
