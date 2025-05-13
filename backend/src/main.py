@@ -1,6 +1,9 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.responses import HTMLResponse
 
 from measurement.router import router as measurement_router
 from labview.router import router as labview_router
@@ -45,6 +48,9 @@ app = FastAPI(
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
     },
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # CORS
@@ -58,10 +64,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# security
+security = HTTPBasic()
+
+def require_basic_auth(
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+
+    user = os.getenv("AUTH_USER")
+    pw   = os.getenv("AUTH_PASSWORD")
+    print(user,pw)
+    if not (secrets.compare_digest(credentials.username, user)
+            and secrets.compare_digest(credentials.password, pw)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
 # registration of routers
-app.include_router(measurement_router)
+app.include_router(measurement_router, dependencies=[Depends(require_basic_auth)])
 app.include_router(labview_router)
 
+@app.get(
+    "/docs",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_basic_auth)],
+    include_in_schema=False,
+)
+def swagger_docs():
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title="Secure API Docs"
+    )
+
+@app.get(
+    "/redoc",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_basic_auth)],
+    include_in_schema=False,
+)
+def redoc_docs():
+    return get_redoc_html(
+        openapi_url="/openapi.json",
+        title="Secure ReDoc"
+    )
+
+@app.get(
+    "/openapi.json",
+    dependencies=[Depends(require_basic_auth)],
+    include_in_schema=False,
+)
+def openapi_json():
+    return app.openapi()
 
 # TODO replace by non-deprecated feature
 @app.on_event("startup")
@@ -75,6 +130,7 @@ def on_startup():
     if not os.path.exists(settings.output_dir):
         os.mkdir(settings.output_dir)
 
+    print(f"[DEBUG] AUTH_USER={os.getenv("AUTH_USER")!r}, AUTH_PASSWORD={os.getenv("AUTH_PASSWORD")!r}")
     # start task scheduler
     scheduler.start()
 
