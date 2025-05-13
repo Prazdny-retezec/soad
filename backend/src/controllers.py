@@ -14,9 +14,9 @@ settings = AppSettings()
 def get_acoustic_emission_controller() -> AcousticEmissionController:
     if settings.mock_ae:
         logging.warn("App is using mock data for AcousticEmissionController")
-        return AcousticEmissionMockController("settings.ae_ip_address", 0, settings.output_dir)
+        return AcousticEmissionMockController(settings.ae_ip_address, settings.ae_port, settings.output_dir)
 
-    return AcousticEmissionController("settings.ae_ip_address", 0, settings.output_dir)
+    return AcousticEmissionController(settings.ae_ip_address, settings.ae_port, settings.output_dir)
 
 
 def get_rgb_camera_controller(width: int, height: int) -> RgbCameraController:
