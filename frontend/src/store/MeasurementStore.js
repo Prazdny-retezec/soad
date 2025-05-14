@@ -1,19 +1,19 @@
 // src/stores/measurement.ts
 import { defineStore } from 'pinia';
-import api from '@/services/api.js'
+import api from '@/services/api.js'   
 import config from '@/config';
 
 
+
 export const useMeasurementStore = defineStore('measurement', {
-  state() {
-    return {
-      error: null,
-      isLoading: false,
-      status: null,
-      recordingMode: null,
-      measurements: [],
-    };
-  },
+  state: () => ({
+    error: null,
+    isLoading: false,
+    measurements: [],
+    measurementDetail: null,
+    recordingMode: null,
+    status: null,
+  }),
 
   actions: {
     async loadAll() {
@@ -24,20 +24,8 @@ export const useMeasurementStore = defineStore('measurement', {
         this.measurements = data;
       } catch {
         this.error = 'Cannot load measurements';
-      }
-    },
-    async startAEMeasurement() {
-      try {
-        this.isLoading = true;
-        const response = await axios.post(
-          config.backendUrl + '/acoustic/start_rec'
-        );
-        this.recordingMode = response.data.recording_mode;
-        this.status = response.data.status;
-        this.error = null;
+      } finally {
         this.isLoading = false;
-      } catch {
-        this.error = 'Cannot start AE measurement';
       }
     },
 
@@ -56,6 +44,7 @@ export const useMeasurementStore = defineStore('measurement', {
     },
 
     async createMeasurement(dto) {
+
       this.error = null;
       this.isLoading = true;
       try {
@@ -95,7 +84,6 @@ export const useMeasurementStore = defineStore('measurement', {
         this.error = 'Cannot update measurement';
       } finally {
         this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
       }
     },
 
@@ -109,9 +97,9 @@ export const useMeasurementStore = defineStore('measurement', {
         this.error = 'Cannot delete measurement';
       } finally {
         this.isLoading = false;
-        this.error = 'Cannot measure RGB photos, check the camera connection.';
       }
     },
+      
 
     async planMeasurement(id, planAt, aeDelta) {
       this.error = null;
@@ -126,9 +114,9 @@ export const useMeasurementStore = defineStore('measurement', {
         this.error = 'Cannot plan measurement';
       } finally {
         this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
       }
     },
+    
 
     async unplanMeasurement(id) {
       this.error = null;
@@ -142,8 +130,8 @@ export const useMeasurementStore = defineStore('measurement', {
         this.error = 'Cannot unplan measurement';
       } finally {
         this.isLoading = false;
-        this.error = 'Cannot log in, wrong password! Try again.';
       }
     },
+    
   },
 });
