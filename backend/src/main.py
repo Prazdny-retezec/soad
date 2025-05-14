@@ -13,9 +13,12 @@ from scheduler import scheduler
 from settings import AppSettings
 
 
+
 settings = AppSettings()
 
-# BE application instance
+
+
+
 
 description = """
 Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat. 🚀
@@ -39,6 +42,7 @@ You will be able to:
 * **Login** (_not implemented_).
 """
 
+
 security = HTTPBasic()
 
 
@@ -57,6 +61,8 @@ def require_basic_auth(
             headers={"WWW-Authenticate": "Basic"},
         )
     
+
+# BE application instance
 app = FastAPI(
     title="Soad",
     description=description,
@@ -69,11 +75,13 @@ app = FastAPI(
     license_info={
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
+
     },
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
 )
+
 
 # CORS
 origins = [
@@ -88,7 +96,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-    
+
 # registration of routers
 app.include_router(
     measurement_router,

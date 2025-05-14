@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api.js'   
 import config from '@/config';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
 
 export const useMeasurementStore = defineStore('measurement', {
@@ -43,6 +44,7 @@ export const useMeasurementStore = defineStore('measurement', {
     },
 
     async createMeasurement(dto) {
+
       this.error = null;
       this.isLoading = true;
       try {
@@ -97,6 +99,7 @@ export const useMeasurementStore = defineStore('measurement', {
         this.isLoading = false;
       }
     },
+      
 
     async planMeasurement(id, planAt, aeDelta) {
       this.error = null;
@@ -113,6 +116,7 @@ export const useMeasurementStore = defineStore('measurement', {
         this.isLoading = false;
       }
     },
+    
 
     async unplanMeasurement(id) {
       this.error = null;
@@ -128,5 +132,6 @@ export const useMeasurementStore = defineStore('measurement', {
         this.isLoading = false;
       }
     },
+    
   },
 });

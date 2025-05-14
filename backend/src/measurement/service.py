@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import logging
 import os
@@ -7,6 +8,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -28,6 +30,14 @@ class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
         self.db = db
         self.scheduler = scheduler
+
+    def check_for_conflicting_measurements(self, plan_from: datetime) -> bool:
+        # Kontrola, zda již existuje měření s daným časem
+        conflict = self.db.query(Measurement).filter(
+            (Measurement.deleted_at.is_(None)) &
+            (Measurement.planned_at == plan_from)  # Kontrola, zda se čas naplánovaného měření shoduje
+        ).first()
+        return conflict is not None
 
     def get_measurement(self, measurement_id: int) -> Measurement:
         query = self.db.query(Measurement).filter(
@@ -118,8 +128,11 @@ class MeasurementService:
 
         # remove run of planned job
         if measurement.scheduler_job_id is not None:
-            self.scheduler.remove_job(measurement.scheduler_job_id)
-            measurement.scheduler_job_id = None
+            try:
+                self.scheduler.remove_job(measurement.scheduler_job_id)
+                measurement.scheduler_job_id = None
+            except JobLookupError as e:
+                logging.warning(e)
 
         # soft delete
         measurement.deleted_at = datetime.now()
@@ -185,8 +198,13 @@ class MeasurementService:
         measurement = self.__save_measurement(measurement)
         return measurement
 
-    @staticmethod  # must be static due to serialization of job
+    @staticmethod
     async def proceed_measuring(measurement_id: int):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, MeasurementService._proceed_measuring_sync, measurement_id)
+
+    @staticmethod  # must be static due to serialization of job
+    def _proceed_measuring_sync(measurement_id: int):
         # must have explicitly declared session due to serialization of job
         db = sessionLocal()
         app_settings = AppSettings()
@@ -326,3 +344,12 @@ class MeasurementService:
         self.db.refresh(measurement)
 
         return measurement
+
+    def _is_time_taken(self, plan_at: datetime) -> bool:
+        # Check if any existing measurement overlaps with the given time
+        overlapping_measurement = self.db.query(Measurement).filter(
+            Measurement.deleted_at.is_(None),
+            Measurement.planned_at == plan_at
+        ).first()
+
+        return overlapping_measurement is not None

@@ -9,12 +9,13 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from google_drive import GDRIVE_CREDENTIALS_DIR
+from settings import AppSettings
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-TOKEN_PATH = os.path.join(GDRIVE_CREDENTIALS_DIR, "token.json")
-CREDENTIALS_PATH = os.path.join(GDRIVE_CREDENTIALS_DIR, "credentials.json")
+TOKEN_PATH = os.path.join(AppSettings().gdrive_credentials_dir, "token.json")
+CREDENTIALS_PATH = os.path.join(AppSettings().gdrive_credentials_dir, "credentials.json")
 
 #creates oauth token, returns gdrive_service used for communicating with gdrive
 def gdrive_auth():

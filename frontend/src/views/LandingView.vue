@@ -21,7 +21,7 @@
               style="width: 300px"
               >Log in</v-btn
             ><br />
-            <v-btn
+            <!-- <v-btn
               :to="{ name: 'signin' }"
               rounded="xl"
               size="large"
@@ -29,7 +29,7 @@
               color="almost-white"
               style="width: 300px"
               >Create new account</v-btn
-            >
+            > -->
           </div>
         </v-col>
       </v-row>
