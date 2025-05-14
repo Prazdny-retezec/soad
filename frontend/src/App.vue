@@ -1,36 +1,40 @@
 <template>
   <v-app>
-    <Navbar v-if="isAuthenticated"/>
+    <Navbar v-if="userStore.isAuthenticated" />
+
     <v-main>
-		<router-view></router-view>
+      
+      <ErrorDialog
+        v-model="uiStore.authError"
+        title="Authentication Mismatch"
+        message="Frontend and backend credentials don’t match. Please check your .env settings."
+        @close="uiStore.clearAuthError"
+      />
+
+      <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script>
-import Navbar from "@/components/Navbar.vue";
+import Navbar      from "@/components/Navbar.vue";
+import ErrorDialog from "@/components/ErrorDialog.vue";
 import { mapStores } from "pinia";
 import { useUserStore } from "@/store/UserStore.js";
+import { useUiStore }   from "@/store/Ui.js";
 
 export default {
-  name: 'App',
-  components: {Navbar},
-
+  name: "App",
+  components: { Navbar, ErrorDialog },
   computed: {
-    ...mapStores(useUserStore),
-
+    ...mapStores(useUserStore, useUiStore),
     isAuthenticated() {
-      return useUserStore().isAuthenticated
+      return this.userStore.isAuthenticated;
     },
   },
-  data () {
-	return {
-	  //
-	}
-  },
-}
-
+};
 </script>
+
 
 <style>
 .nav_element {

@@ -4,12 +4,16 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 import secrets
 from measurement.router import router as measurement_router
 from database import Base, engine
 from scheduler import scheduler
 from settings import AppSettings
+
+
+settings = AppSettings()
 
 # BE application instance
 
@@ -34,6 +38,25 @@ You will be able to:
 
 * **Login** (_not implemented_).
 """
+
+security = HTTPBasic()
+
+
+def require_basic_auth(
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    
+    user = settings.user
+    pw   = settings.pw
+    print(user,pw)
+    if not (secrets.compare_digest(credentials.username, user)
+            and secrets.compare_digest(credentials.password, pw)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    
 app = FastAPI(
     title="Soad",
     description=description,
@@ -52,22 +75,19 @@ app = FastAPI(
     openapi_url=None,
 )
 
-security = HTTPBasic()
+# CORS
+origins = [
+    "http://localhost:5000",
+]
 
-def require_basic_auth(
-    credentials: HTTPBasicCredentials = Depends(security),
-):
-    
-    user = os.getenv("AUTH_USER")
-    pw   = os.getenv("AUTH_PASSWORD")
-    print(user,pw)
-    if not (secrets.compare_digest(credentials.username, user)
-            and secrets.compare_digest(credentials.password, pw)):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
     
 # registration of routers
 app.include_router(
@@ -110,6 +130,7 @@ def openapi_json():
 
 # TODO replace by non-deprecated feature
 @app.on_event("startup")
+
 def on_startup():
     settings = AppSettings()
 

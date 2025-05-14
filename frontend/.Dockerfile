@@ -4,6 +4,14 @@ FROM node:lts-alpine as build
 # Set working directory
 WORKDIR /app
 
+# ENV arguments
+ARG VITE_ADMIN_USERNAME
+ARG VITE_ADMIN_PASSWORD
+ARG VITE_API_URL
+ENV VITE_ADMIN_USERNAME=$VITE_ADMIN_USERNAME
+ENV VITE_ADMIN_PASSWORD=$VITE_ADMIN_PASSWORD
+ENV VITE_API_URL=$VITE_API_URL
+
 # Install project dependencies
 COPY package.json package-lock.json ./
 RUN npm install
