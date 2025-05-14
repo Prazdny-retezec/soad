@@ -3,6 +3,15 @@
 Tento projekt se dělí na tři hlavní složky: `backend`, `frontend` a `labview`.
 Více informací je uvedeno v [README](../../README.md), kde je popsán celý technologický stack.
 
+## Obsah
+
+- [Lokální vývoj](#lokální-vývoj)
+  - [Databáze](#databáze)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+  - [docker-compose](#docker-compose)
+  - [LabVIEW](#labview)
+
 ## Lokální vývoj
 
 ### Databáze
@@ -29,11 +38,7 @@ Je možné také jít cestou docker-compose:
 ```bash
 # Pozor: udělá build všech služeb z .yml (backend, frontend, database)
 docker-compose build
-# Spustí jenom databázi
 docker-compose up database
-
-# Deaktivuje všechny kontejnery
-docker-compose down 
 ```
 
 Po spuštění výše uvedených příkazů by se měla vytvořit databáze s názvem `soad`, kam se budou ukládat veškerá měření. 
@@ -70,14 +75,13 @@ py -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Dále je nutné přejmenovat soubor `soad/backend/.env.example` na `soad/backend/.env`.
+Dále je nutné přidat soubor `.env`. Záleží na přání vývojáře, jak ho vyplní, ale ukázkové nastavení enviromentálních 
+proměnných je možné nalézt v souboru `soad/backend/.env.example`.
 
 Poté můžeme spustit `main.py` soubor:
 
 ```bash
 fastapi dev src/main.py
-# Windows
-# py src/main.py
 ```
 
 Po krátké době se vytvoří FastAPI aplikace a poběží na adrese [http://localhost:5001](http://localhost:5001).
@@ -86,14 +90,15 @@ Na [http://localhost:5001/docs](http://localhost:5001/docs) poběží Swagger do
 
 ### Frontend
 
-Nejprve je nutné nainstalovat potřebné závislosti:
+Nutnou podmínkou pro FE je nainstalovaný [Node.js](https://nodejs.org/en/download). Dále je nutné přidat nezbytné závislosti:
 
 ```bash
 # soad/frontend/
 npm install
 ```
 
-Dál je nutné přejmenovat soubor `soad/frontend/.env.example` na `soad/frontend/.env` a následně spustit Vite dev server:
+Podobně jako u backendu je potřeba přidat soubor `.env` a vyplnit jej. Ukázkové nastavení se nachází v souboru 
+`soad/frontend/.env.example`. Následně je potřeba spustit Vite dev server:
 
 ```bash
 npm run dev
@@ -112,3 +117,7 @@ docker-compose up
 # Vypne kontejnery
 docker-compose down
 ```
+
+### LabVIEW
+
+TODO
