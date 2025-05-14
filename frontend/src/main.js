@@ -1,22 +1,35 @@
-/**
- * main.js
- *
- * Bootstraps Vuetify and other plugins then mounts the App`
- */
-
-import router from "@/router/index.js";
-
-// Plugins
+// src/main.js
+import { createApp }   from 'vue'
+import { createPinia }  from 'pinia'
+import App              from './App.vue'
+import router           from './router'
+import axios            from '@/services/api'    
+import { useUiStore }   from '@/store/Ui.js'
 import { registerPlugins } from '@/plugins'
 
-// Components
-import App from './App.vue'
+const app = createApp(App)
 
-// Composables
-import { createApp } from 'vue'
 
-const app = createApp(App).use(router)
+const pinia = createPinia()
+app.use(pinia)
 
+
+app.use(router)
 registerPlugins(app)
+
+
+const uiStore = useUiStore()
+
+
+axios.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      uiStore.authError = true
+      console.log(uiStore.authError)
+    }
+    return Promise.reject(err)
+  }
+)
 
 app.mount('#app')

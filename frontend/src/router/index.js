@@ -6,6 +6,8 @@ import LoginView from '@/views/LoginView.vue';
 import SigninView from '@/views/SigninView.vue';
 import LandingView from '@/views/LandingView.vue';
 import ConfigurationView from "@/views/ConfigurationView.vue";
+import { createPinia } from 'pinia'
+export const pinia = createPinia()
 
 const routes = [
   {

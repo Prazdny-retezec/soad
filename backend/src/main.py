@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from measurement.router import router as measurement_router
 from labview.router import router as labview_router
@@ -11,6 +12,8 @@ from database import Base, engine
 from scheduler import scheduler
 from settings import AppSettings
 from fastapi.middleware.cors import CORSMiddleware
+
+settings = AppSettings()
 
 description = """
 Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat. 🚀
@@ -35,6 +38,7 @@ You will be able to:
 """
 
 # BE application instance
+
 app = FastAPI(
     title="Soad",
     description=description,
@@ -98,6 +102,7 @@ def swagger_docs():
         title="Secure API Docs"
     )
 
+
 @app.get(
     "/redoc",
     response_class=HTMLResponse,
@@ -110,6 +115,7 @@ def redoc_docs():
         title="Secure ReDoc"
     )
 
+
 @app.get(
     "/openapi.json",
     dependencies=[Depends(require_basic_auth)],
@@ -117,6 +123,7 @@ def redoc_docs():
 )
 def openapi_json():
     return app.openapi()
+
 
 # TODO replace by non-deprecated feature
 @app.on_event("startup")

@@ -6,7 +6,7 @@ services:
       dockerfile: .Dockerfile
       args:
         VITE_ADMIN_USERNAME: admin
-        VITE_ADMIN_PASSWORD: admin
+        VITE_ADMIN_PASSWORD: changeit
         VITE_API_URL: http://localhost:5001
     container_name: soad-fe
     environment:
