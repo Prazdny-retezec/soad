@@ -120,4 +120,20 @@ docker-compose down
 
 ### LabVIEW
 
-TODO
+Postačí jakákoliv stabilní verze [LabVIEW](https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067), která poběží na laboratorním PC. 
+MS musí být připojena přes **Gigabit Ethernet** a v operačním systému musí být na rozhraní síťové karty nastavena max. velikost jumbo packetů.
+
+Po připojení kamery je potřeba otevřít `labview/` v LabVIEW prostředí.
+V tomto adresáři se nachází `LabVIEW 2012/` (nutný toolkit), `lv_gige/` (LabVIEW projekt) a `labview-control/` (FastAPI aplikace).
+
+Před spuštěním je nutné nastavit parametry kamery. Níže je příklad:
+
+![labview-ms-settings](../img/labview-hyperspectral-cam-settings.png)
+
+- **Path** - cesta k obrázku, který pořídí kamera
+- **CameraName** - musí být vybrána připojená MS
+- **Width & Height** - musí odpovídat hodnotám, které jsou v DeviceModelName (zde například D2048x1088)
+- **Packet size** - musí být nastaven na hodnotu **8228**
+
+Teprve teď můžeme spustit LabVIEW kód a FastAPI aplikaci v `labview-control/`. LabVIEW bude každou sekundu vysílat HTTP GET dotaz 
+a pokud dostane hodnotu `1`, tak se pořídí snímek, jinak čeká. Dotaz je vysílán na FastAPI aplikaci.
