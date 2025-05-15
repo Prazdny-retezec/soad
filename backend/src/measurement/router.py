@@ -8,10 +8,11 @@ from measurement.service import MeasurementService
 from fastapi import APIRouter, Depends
 from datetime import datetime
 
+
 router = APIRouter(
     prefix="/measurement",
-    tags=["Measurement"],
-)
+    tags=["Measurement"]
+    )
 
 @router.get("/conflict")
 async def check_conflict(planFrom: str, service: MeasurementService = Depends(MeasurementService)):

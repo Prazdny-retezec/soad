@@ -9,6 +9,8 @@ class AppSettings(BaseSettings):
     secret: str = os.environ.get("SECRET")
     gdrive_credentials_dir: str = os.environ.get("GDRIVE_CREDENTIALS_DIR")
     output_dir: str = os.environ.get("OUTPUT_DIR")
+    user: str = os.getenv("AUTH_USER")
+    pw: str = os.getenv("AUTH_PASSWORD")
     ae_ip_address: str = os.environ.get("AE_IP_ADDRESS")
     ae_port: int = os.environ.get("AE_PORT")
     mock_data_dir: str = os.environ.get("MOCK_DATA_DIR")
