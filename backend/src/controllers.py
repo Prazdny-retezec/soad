@@ -10,26 +10,48 @@ from settings import AppSettings
 
 settings = AppSettings()
 
-
-def get_acoustic_emission_controller() -> AcousticEmissionController:
-    if settings.mock_ae:
-        logging.warn("App is using mock data for AcousticEmissionController")
-        return AcousticEmissionMockController(settings.ae_ip_address, settings.ae_port, settings.output_dir)
-
-    return AcousticEmissionController(settings.ae_ip_address, settings.ae_port, settings.output_dir)
+rgb_camera_controller = None
+ms_camera_controller = None
+acoustic_emission_controller = None
 
 
-def get_rgb_camera_controller(width: int, height: int) -> RgbCameraController:
-    if settings.mock_rgb:
-        logging.warn("App is using mock data for RgbCameraController")
-        return RgbCameraMockController(settings.output_dir, width, height)
-
-    return RgbCameraController(settings.output_dir, width, height)
+def get_rgb_camera_controller() -> RgbCameraController:
+    return rgb_camera_controller
 
 
 def get_ms_camera_controller() -> MultiSpectralCameraController:
-    if settings.mock_rgb:
-        logging.warn("App is using mock data for MultiSpectralCameraController")
-        return MultiSpectralCameraMockController(settings.output_dir)
+    return ms_camera_controller
 
-    return MultiSpectralCameraController(settings.output_dir)
+
+def get_acoustic_emission_controller() -> AcousticEmissionController:
+    return acoustic_emission_controller
+
+
+# RGB camera
+if settings.mock_rgb:
+    logging.warn("App is using mock data for RgbCameraController")
+    rgb_camera_controller = RgbCameraMockController(settings.output_dir)
+else:
+    rgb_camera_controller = RgbCameraController(settings.output_dir)
+
+# Acoustic emission
+if settings.mock_ae:
+    logging.warn("App is using mock data for AcousticEmissionController")
+    acoustic_emission_controller = AcousticEmissionMockController(
+        ip_address=settings.ae_ip_address,
+        port=settings.ae_port,
+        output_dir=settings.output_dir
+    )
+else:
+    acoustic_emission_controller = AcousticEmissionController(
+        ip_address=settings.ae_ip_address,
+        port=settings.ae_port,
+        output_dir=settings.output_dir
+    )
+
+# Multispectral camera
+if settings.mock_msc:
+    logging.warn("App is using mock data for MultiSpectralCameraController")
+    ms_camera_controller = MultiSpectralCameraMockController(settings.output_dir, settings.msc_exposure_time)
+else:
+    ms_camera_controller = MultiSpectralCameraController(settings.output_dir, settings.msc_exposure_time)

@@ -11,6 +11,7 @@ class AppSettings(BaseSettings):
     output_dir: str = os.environ.get("OUTPUT_DIR")
     ae_ip_address: str = os.environ.get("AE_IP_ADDRESS")
     ae_port: int = os.environ.get("AE_PORT")
+    msc_exposure_time: int = os.environ.get("MSC_EXPOSURE_TIME")
     mock_data_dir: str = os.environ.get("MOCK_DATA_DIR")
     mock_ae: bool = Field(default=False, alias="MOCK_ACOUSTIC_EMISSION")
     mock_rgb: bool = Field(default=False, alias="MOCK_RGB_CAMERA")

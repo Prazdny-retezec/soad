@@ -13,7 +13,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from common.enum import ImageFormat
 from controllers import get_acoustic_emission_controller, get_rgb_camera_controller, get_ms_camera_controller
 from database import get_db, sessionLocal
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementCreatePeriodicDto
@@ -228,18 +227,21 @@ class MeasurementService:
         measurement.started_at = datetime.now()
         measurement = change_state(measurement, MeasurementState.DOWNLOADING)
 
+        # clear data directory before measuring
+        clear_data_dir()
+
         try:
             # setup thread for each sensor
             ae_thread = threading.Thread(
-                target=MeasurementService.acoustic_emission_measuring,
+                target=acoustic_emission_measuring,
                 args=(measurement.ae_delta, measurement.duration)
             )
             rgb_thread = threading.Thread(
-                target=MeasurementService.rgb_camera_measuring,
+                target=rgb_camera_measuring,
                 args=(measurement.sensor_settings,)
             )
             ms_thread = threading.Thread(
-                target=MeasurementService.ms_camera_measuring,
+                target=ms_camera_measuring,
                 args=(measurement.sensor_settings,)
             )
 
@@ -286,10 +288,7 @@ class MeasurementService:
             measurement = change_state(measurement, MeasurementState.FINISHED)
 
             # delete uploaded files
-            files_to_delete = glob.glob(app_settings.output_dir + "/*")
-            for file in files_to_delete:
-                os.remove(file)
-                logging.info(f"Deleted file: {file}")
+            clear_data_dir()
 
         except Exception as e:
             logging.error(e)
@@ -297,46 +296,6 @@ class MeasurementService:
             change_state(measurement, MeasurementState.ERROR)
         finally:
             db.close()
-
-    @staticmethod
-    def acoustic_emission_measuring(ae_delta: timedelta, duration: timedelta):
-        with get_acoustic_emission_controller() as acoustic_emission:
-            # TODO emission.configure() -> SensorSettings
-            acoustic_emission.start_recording(str(uuid.uuid4()), 0)
-            # beginning of acoustic emission collection (before cameras)
-            time.sleep(ae_delta.seconds)
-
-            # measuring itself
-            time.sleep(duration.seconds)
-
-            # end of acoustic emission measuring (after cameras)
-            time.sleep(ae_delta.seconds)
-
-            # saving measured data to csv file
-            acoustic_emission.stop_recording()
-
-    @staticmethod
-    def rgb_camera_measuring(sensors: SensorSettings):
-        with get_rgb_camera_controller(width=sensors.rgb_image_width, height=sensors.rgb_image_height) as rgb_camera:
-            for i in range(0, sensors.rgb_image_count):
-                rgb_camera.capture_image(quality=sensors.rgb_image_quality, img_format=sensors.rgb_image_format)
-                time.sleep(sensors.rgb_sampling_delay)
-
-    @staticmethod
-    def ms_camera_measuring(sensors: SensorSettings):
-        ms_camera = get_ms_camera_controller()
-
-        for i in range(0, sensors.ms_image_count):
-            ms_camera.start_capturing(
-                img_format=ImageFormat.PNG,
-                width=sensors.ms_image_width,
-                height=sensors.ms_image_height,
-                interval=sensors.ms_sampling_delay,
-                exposure_time=sensors.ms_exposure_time
-            )
-
-            ms_camera.stop_capturing()
-            time.sleep(sensors.ms_sampling_delay)
 
     def __save_measurement(self, measurement: Measurement) -> Measurement:
         self.db.add(measurement)
@@ -353,3 +312,54 @@ class MeasurementService:
         ).first()
 
         return overlapping_measurement is not None
+
+
+def acoustic_emission_measuring(ae_delta: timedelta, duration: timedelta):
+    with get_acoustic_emission_controller() as acoustic_emission:
+        # TODO emission.configure() -> SensorSettings
+        acoustic_emission.configure("TODO")
+
+        # beginning of acoustic emission collection (before cameras)
+        acoustic_emission.start_recording(str(uuid.uuid4()), 0)
+        time.sleep(ae_delta.seconds)
+
+        # measuring itself
+        time.sleep(duration.seconds)
+
+        # end of acoustic emission measuring (after cameras)
+        time.sleep(ae_delta.seconds)
+
+        # saving measured data to csv file
+        acoustic_emission.stop_recording()
+
+
+def rgb_camera_measuring(sensors: SensorSettings):
+    rgb_camera = get_rgb_camera_controller()
+
+    # configure
+    rgb_camera.configure_size(sensors.rgb_image_width, sensors.rgb_image_height)
+
+    # proceed capturing
+    with rgb_camera:
+        for i in range(0, sensors.rgb_image_count):
+            rgb_camera.capture_image(quality=sensors.rgb_image_quality, img_format=sensors.rgb_image_format)
+            time.sleep(sensors.rgb_sampling_delay)
+
+
+def ms_camera_measuring(sensors: SensorSettings):
+    ms_camera = get_ms_camera_controller()
+
+    for i in range(0, sensors.ms_image_count):
+        ms_camera.start_capturing()
+        time.sleep(ms_camera.exposure_time + 1)
+        ms_camera.stop_capturing()
+
+        time.sleep(sensors.ms_sampling_delay)
+
+
+def clear_data_dir():
+    app_settings = AppSettings()
+    files_to_delete = glob.glob(app_settings.output_dir + "/*")
+    for file in files_to_delete:
+        os.remove(file)
+        logging.info(f"Deleted file: {file}")
