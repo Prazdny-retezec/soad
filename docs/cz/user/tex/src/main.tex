@@ -38,6 +38,21 @@
         V aplikaci po přihlášení lze měření zahajovat i plánovat na určitý den a čas, sledovat historii meření,
         stahovat data a v neposlední řadě nastavovat parametry měření.
 
+        \section{Prerekvizity}\label{sec:prerekvizity}
+
+        Pro provoz celého systému s připojenými senzory je nutné, aby stroj, na kterém bude tento
+        systém poběží, splňoval určité náležitosti.
+        Tento stroj musí:
+
+        \begin{enumerate}
+            \item mít nainstalované \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}
+            \item obsahovat síťovou kartu s alespoň dvěma Ethernet rozhraními, přičemž alespoň jedno z
+            nich bude Gigabit Ethernet (připojení MS kamery)
+            \item obsahovat alespoň jeden port USB 3 (připojení RGB kamery)
+            \item mít nainstalovanou radiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
+        \end{enumerate}
+
+
         \section{Přihlášení do aplikace}\label{sec:prihlaseni-do-aplikace}
 
         Než uživatel začne pracovat v aplikaci, je nutné se přihlásit.

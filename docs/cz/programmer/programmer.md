@@ -130,6 +130,7 @@ Před spuštěním je nutné nastavit parametry kamery. Níže je příklad:
 
 ![labview-ms-settings](img/labview-hyperspectral-cam-settings.png)
 
+- **URL address of the backend** - adresa BE, kam LabVIEW bude posílat GET dotaz
 - **Path** - cesta k obrázku, který pořídí kamera
 - **CameraName** - musí být vybrána připojená MS
 - **Width & Height** - musí odpovídat hodnotám, které jsou v DeviceModelName (zde například D2048x1088)
