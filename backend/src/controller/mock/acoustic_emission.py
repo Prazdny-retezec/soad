@@ -49,3 +49,12 @@ class AcousticEmissionMockController(AcousticEmissionController):
 
             time.sleep(1)
             current_time += timedelta(seconds=1)
+
+    def configure(self, config: str):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
