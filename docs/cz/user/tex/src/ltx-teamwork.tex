@@ -1,0 +1,312 @@
+% +-------------------+
+% | Rozložení stránek |
+% +-------------------+
+\usepackage[
+    a4paper,
+    width=150mm,
+%  height=220mm,
+    top=25mm,
+    bottom=25mm
+]{geometry}
+
+
+% +------+
+% | Font |
+% +------+
+\usepackage{fontspec}
+\setmainfont{Linux Libertine O}
+
+
+% +---------+
+% | Čeština |
+% +---------+
+\usepackage[czech]{babel}
+
+
+% +------------------------------------+
+% | programovací jazyk Lua - LuaLaTeX  |
+% +------------------------------------+
+\usepackage{luacode}
+\newcommand{\luavar}[1]{\directlua{tex.sprint(#1)}}
+\begin{luacode*}
+-- vrací uživatelem zadané datum nebo aktuální datum
+function get_date()
+  if (date == nill or date == '') then
+    return tex.print('\\today')
+  else
+    return tex.print(date)
+  end
+end
+
+-- vrací všechny autory dokumentu( jméno + obor) naformátované pro TeX
+function get_authors()
+  local result = ""
+  for i, author in ipairs(authors) do
+    result = result .. author.name .. "&&&&&" .. author.program .. "\\\\"
+  end
+  return result
+end
+
+-- vrací počet autorů
+function get_authors_count()
+    local result = 0
+    for i, author in ipairs(authors) do
+        result = result + 1
+    end
+    return result
+end
+
+-- vrací jména všech autorů oddělená čárkami
+function get_author_names()
+    local result = ""
+    if get_authors_count() == 1 then
+        return authors[1].name
+    else
+        for i, author in ipairs(authors) do
+            result = result .. author.name .. ", "
+        end
+        result = result:sub(1, -3)
+        return result
+    end
+end
+
+-- podmíněné výpisy
+function printBiblio()
+  local output = "\\newpage \\section{Literatura} \\printbibliography[heading=none]"
+  if (PRINT_BIBLIO) then
+    return tex.print(output)
+  end
+end
+
+function printTablesList()
+    if (PRINT_TABLES) then
+        return tex.print("\\listoftables")
+    end
+end
+
+function printFiguresList()
+    if (PRINT_FIGURES) then
+        return tex.print("\\listoffigures")
+    end
+end
+
+function printSnippetsList()
+    if (PRINT_SNIPPETS) then
+        return tex.print("\\lstlistoflistings")
+    end
+end
+\end{luacode*}
+
+
+% +---------+
+% | seznamy |
+% +---------+
+\usepackage{multicol} % vícesloupcový seznam
+
+
+% +---------+
+% | chemie  |
+% +---------+
+\usepackage{chemformula}
+
+
+% +---------+
+% | obrázky |
+% +---------+
+\usepackage{graphicx}
+\graphicspath{{./images/}}
+\usepackage{svg}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+
+
+% +-------+
+% | barvy |
+% +-------+
+\usepackage{color}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+
+
+% +--------+
+% | odkazy |
+% +--------+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    pdftitle={\luavar{title}},
+    urlcolor=teal
+}
+
+% +------------------------------+
+% |         bibliografie         |
+% +------------------------------+
+% | používá se norma ČSN ISO 690 |
+% +------------------------------+
+\usepackage{csquotes}
+\usepackage[style=iso-authoryear,
+    hyperref=true,
+    url=false,
+    isbn=false,
+    backref=true]{biblatex}
+\addbibresource{biblio.bib}
+% převedení bibliografie do kapitálek
+%\renewcommand{\mkbibcompletename}[1]{\textsc{#1}}  % afektuje kromě bibliografie i citace
+\renewcommand*{\mkbibnamegiven}[1]{\textsc{#1}}
+
+
+% +-----------------------+
+% | sazba zdrojových kódů |
+% +-----------------------+
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Zdrojový kód}
+\renewcommand{\lstlistlistingname}{Seznam zdrojových kódů}
+
+% čeština ve zdrojovém kódu
+\lstset{extendedchars}
+\begingroup
+\catcode0=12 %
+\makeatletter
+\g@addto@macro\lst@DefEC{%
+    \lst@CCECUse\lst@ProcessLetter
+    ěščřžĚŠČŘŽťŤďĎňŇů
+    ^^00%
+}%
+\endgroup
+
+% stylování zdrojového kódu (barvy klíčových slov, ...)
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{white},
+    commentstyle=\color{dkgreen},
+    keywordstyle=\color{orange},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{purple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+
+% +--------------------------+
+% | záhlaví a zápatí stránek |
+% +--------------------------+
+\usepackage{fancyhdr}
+
+
+% +----------------------------+
+% | vlastní použitelné příkazy |
+% +----------------------------+
+\newcommand\lorem{
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.
+}
+\newcommand\mistrjan{
+    Krajani a druzi moji, ach, smutno mi je, trudno, neveselo, chmurami jsem zavalen, hanbou jsem zdrcen a jest mi za co pykat. Maje na mysli jen dobro, bez rozmyslu jsem vnesl do jazyka velkou lotrovinu a tak zavinil historickou nehodu. Dlouho se to tutlalo, teprve tato epocha celou moji vinu naplno vyjevila. Uznal jsem to a kaji se. V troufalosti ducha, a usiluje pouze o to, aby bylo lze rychleji rozmluvy, ano i knihy, skripta a lejstra zapisovati, jsem vymyslel potrhlou a krutou fintu. Brkem z husy jsem litery a, c, d, e, i, n, o, r, s, r, u, y, z pobodal a zle poranil.
+}
+
+
+% +-------------------+
+% | Titulní stránka   |
+% +-------------------+
+\newcommand\mytitlepage{
+    \begin{titlepage}
+    \begin{center}
+    \Large{
+        \luavar{university}\\
+        \luavar{faculty}\\
+    }
+    \vspace{0.2cm}
+    \hrule
+
+    \vfill
+    \Huge{
+        \textbf{\luavar{title}}
+    }
+
+    \vspace{1.5cm}
+
+    \LARGE {
+        \textbf{\luavar{document_type}}\\
+    }
+
+    \vspace{0.2cm}
+
+    \Large {
+        \luavar{subject}\\
+    }
+
+    \vfill
+
+    \vspace{0.8cm}
+
+    \Large{
+        \begin{tabular}{lccccl}
+        \directlua{tex.print(get_authors())}
+        \end{tabular}
+    }
+
+    \vspace{1.5cm}
+
+    \Large{
+        \luavar{place}, \directlua{get_date()}
+    }
+    \end{center}
+    \end{titlepage}
+}
+
+% +------------------------------------+
+% | Nové prostředí pro vložení práce   |
+% +------------------------------------+
+\newenvironment{teamwork}
+{% begin
+
+% PDF meta data
+    \hypersetup{
+        pdfinfo={
+            Title={\luavar{title}},
+            Author={\luavar{get_author_names()}},
+            Subject={\luavar{subject}},
+            Keywords={\luavar{keywords}}
+        }
+    }
+
+    % titulní stránka
+    \mytitlepage
+
+    % obsah
+    \tableofcontents
+    \thispagestyle{empty}
+    \newpage
+    \setcounter{page}{1}
+
+    % záhlaví a zápatí
+    \pagestyle{fancy}
+    \fancyhead{}
+    \fancyfoot{}
+    \fancyhead{\nouppercase{\leftmark}\hfill\thepage}
+    \setlength{\headheight}{14.5pt}
+    }
+    {% end
+
+    % bibliografie
+    \directlua{printBiblio()}
+
+    % seznam obrázků
+    \directlua{printFiguresList()}
+
+    % seznam tabulek
+    \directlua{printTablesList()}
+
+    % seznam zdrojových kódů
+    \directlua{printSnippetsList()}
+}

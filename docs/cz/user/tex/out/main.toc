@@ -1,0 +1,9 @@
+\babel@toc {czech}{}\relax 
+\contentsline {section}{\numberline {1}O aplikaci}{1}{section.1}%
+\contentsline {section}{\numberline {2}Přihlášení do aplikace}{1}{section.2}%
+\contentsline {section}{\numberline {3}Nastavení senzorů}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}RGB kamera}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Hyperspektrální kamera}{2}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Akustická emise}{3}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Zahájení měření}{3}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Stahování dat}{4}{subsection.3.5}%

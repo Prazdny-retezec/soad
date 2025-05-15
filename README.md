@@ -28,5 +28,5 @@ Další použité technologie:
 
 ## Dokumentace
 
-- [Programátorská příručka](./docs/cz/programmer.md)
+- [Programátorská příručka](docs/cz/programmer/programmer.md)
 

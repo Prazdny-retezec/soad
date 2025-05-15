@@ -1,0 +1,152 @@
+%! Author = Daniil
+%! Date = 15.05.25
+
+\documentclass[12pt]{article}
+\usepackage{pdflscape}
+\usepackage{rotating} % otočení tabulky
+
+\input{ltx-teamwork}
+
+% +-----------+
+% | Nastavení |
+% +-----------+
+\begin{luacode*}
+  university = "Mendelova univerzita v~Brně"
+  faculty = "Provozně ekonomická fakulta"
+  title = "Synchronizace obrazových a akustických dat"
+  subject = "ENC-NSS: Nasazení software a služeb"
+  document_type = "uživatelský manuál"
+  place = "Brno"
+  date = "15. 5. 2025"
+  keywords = "ASS, NSS"
+
+  -- autoři (je nutné, si hlídat abecední pořadí jmen ručně)
+  authors = {}
+  authors[1] = {name = "Prázdný řetězec", program = "Otevřená informatika (N-OI)"}
+\end{luacode*}
+
+% +---------------+
+% | Samotná práce |
+% +---------------+
+\begin{document}
+
+    \begin{teamwork}
+
+        \section{O aplikaci}\label{sec:o-aplikace}
+
+        Tato aplikace slouží ke spouštění senzoru a kamer, které získávají data o stavu rostlin.
+        V aplikaci po přihlášení lze měření zahajovat i plánovat na určitý den a čas, sledovat historii meření,
+        stahovat data a v neposlední řadě nastavovat parametry měření.
+
+        \section{Přihlášení do aplikace}\label{sec:prihlaseni-do-aplikace}
+
+        Než uživatel začne pracovat v aplikaci, je nutné se přihlásit.
+        Níže je postup:
+
+        \begin{enumerate}
+            \item Na domovské stránce klikněte na tlačítko „LOG IN“
+            \begin{figure}[hbt!]
+                \centering
+                \includegraphics[width=0.8\textwidth]{../../img/main_page}
+                \caption{Tlačítko pro přihlášení}
+                \label{fig:tlacitko_pro_prih}
+            \end{figure}
+            \item Vyplňte uživatelské jméno a heslo.
+            Pokud programátor použil příklad souboru \texttt{.env}, je to \textbf{admin} \textbf{admin}
+            \item Přihlásíte se kliknutím na tlačítko „LOG ME IN“
+            \begin{figure}[hbt!]
+                \centering
+                \includegraphics[width=0.45\textwidth]{../../img/login_box}
+                \caption{Přihlášovací formulář}
+                \label{fig:login_box}
+            \end{figure}
+        \end{enumerate}
+
+        \section{Nastavení senzorů}\label{sec:nastaveni-senzoru}
+
+        Parametry jednotlivých zařízení lze nastavit na stránce „Configuration“ (tlačítko nahoře stránky).
+        Celkově je možné upravit parametry u RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
+
+        \subsection{RGB kamera}\label{subsec:rgb-kamera}
+
+        Na obrázku 3 se nachází tabulka pro nastavení parametrů RGB kamery.
+        U tohoto zařízení lze pomocí posuvníků
+        potažením směrem vpravo či vlevo nastavit vzorkovací frekvenci a počet snímků.
+        Pod nimi se nachází dvě textová
+        pole, kde se nastavuje, kdy kamera začne snímat (vlevo) a časový interval snímání (vpravo).
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.7\textwidth]{../../img/rgb_cam_settings}
+            \caption{Tabulka pro nastavení RGB kamery}
+            \label{fig:rgb_cam_settings}
+        \end{figure}
+
+        \subsection{Hyperspektrální kamera}\label{subsec:hyperspektralni-kamera}
+
+        Nastavení hyperspektrální kamery, které je zobrazeno na obrázku 4,
+        je shodné s nastavením RGB kamery (viz předchozí sekce RGB kamera).
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.7\textwidth]{../../img/multi_cam_settings}
+            \caption{Tabulka pro nastavení multispektrální kamery}
+            \label{fig:multi_cam_settings}
+        \end{figure}
+
+        \subsection{Akustická emise}\label{subsec:akusticka-emise}
+
+        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení vzorkovací frekvence, prahová hodnota a doba
+        definice vrcholu, které se provádí posuvníkem pohybem směrem vpravo nebo vlevo.
+        Pod nimi je okno, kde se nastavuje
+        doba, po kterou bude měření pomocí tohoto zařízení probíhat.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.8\textwidth]{../../img/ae_settings}
+            \caption{Tabulka pro nastavení akustické emise}
+            \label{fig:ae_settings}
+        \end{figure}
+
+        \subsection{Zahájení měření}\label{subsec:zahajeni-mereni}
+
+        Měření se zahajuje na domovské stránce.
+        Postup je následující:
+
+        \begin{enumerate}
+            \item Klikněte na tlačítko „MEASURE“, které se nachází v pravém horním rohu stránky (obrázek 6).
+            \begin{figure}[hbt!]
+                \centering
+                \includegraphics[width=0.32\textwidth]{../../img/measure_one_time_button}
+                \caption{Tlačítko pro měření}
+                \label{fig:measure_one_time}
+            \end{figure}
+            \item Z nabídky vyberte první variantu „One time measurement“
+            \item V dialogovém okně uveďte název měření, popis a zvolte vhodný čas a parametry
+            \begin{figure}[hbt!]
+                  \centering
+                  \includegraphics[width=0.8\textwidth]{../../img/one_time_measure_dialog}
+                  \caption{Dialogové okno}
+                  \label{fig:one_time_measure_dialog}
+            \end{figure}
+            \item Měření zahájíte kliknutím na tlačítko „START MEASUREMENT“ (na konci dialogu)
+        \end{enumerate}
+
+        Proces vytváření periodického měření je podobný, jenom s tím rozdílem, že je třeba zvolit dva termíny.
+        Pokud se měření nepodaří vytvořit, zobrazí se na konci dialogového okna upozornění.
+
+
+
+        \subsection{Stahování dat}\label{subsec:stahovani-dat}
+
+        Data k měření je možné stáhnout na hlavní stránce aplikace kliknutím na ikonu pro stažení u požadovaného záznamu.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.25\textwidth]{../../img/download_icon}
+            \caption{Ikona pro stažení dat}
+            \label{fig:dowload_icon}
+        \end{figure}
+
+    \end{teamwork}
+\end{document}

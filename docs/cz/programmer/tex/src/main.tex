@@ -1,0 +1,227 @@
+%! Author = Daniil
+%! Date = 15.05.25
+
+\documentclass[12pt]{article}
+\usepackage{pdflscape}
+\usepackage{rotating} % otočení tabulky
+
+\input{ltx-teamwork}
+
+% +-----------+
+% | Nastavení |
+% +-----------+
+\begin{luacode*}
+  university = "Mendelova univerzita v~Brně"
+  faculty = "Provozně ekonomická fakulta"
+  title = "Synchronizace obrazových a akustických dat"
+  subject = "ENC-NSS: Nasazení software a služeb"
+  document_type = "programátorská příručka"
+  place = "Brno"
+  date = "15. 5. 2025"
+  keywords = "ASS, NSS"
+
+  -- autoři (je nutné, si hlídat abecední pořadí jmen ručně)
+  authors = {}
+  authors[1] = {name = "Prázdný řetězec", program = "Otevřená informatika (N-OI)"}
+
+  -- NASTAVENÍ VYPISOVATELNÝCH SEZNAMŮ
+  PRINT_BIBLIO = false
+  PRINT_TABLES = false
+  PRINT_FIGURES = false
+  PRINT_SNIPPETS = false
+\end{luacode*}
+
+% +---------------+
+% | Samotná práce |
+% +---------------+
+\begin{document}
+
+    \begin{teamwork}
+        \section{Základní popis projektu}\label{sec:zakld-popis}
+        Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat.
+
+        \subsection{Funkcionalita}\label{subsec:funkcionalita}
+
+        \begin{enumerate}
+            \item \textbf{Získávání dat ze senzorů} -- čtení a sbírání dat z~různých senzorů, konkrétně z~akustických senzorů a kamer (RGB, multispektrální).
+            \item \textbf{Ukládání dat} -- data jsou uchována lokálně a následně synchronizována do centrálního úložiště (cloud).
+            \item \textbf{Automatická transformace dat} -- data jsou automaticky transformovaná do vhodných formátů (PNG, TIFF, \ldots).
+            \item \textbf{Automatické spuštění a nastavení měření} -- podpora automatického spuštění měření na základe definovaných kritérií (čas, událost).
+            \item \textbf{Webová administrace} -- uživatelské rozhraní, které poskytuje možnost nastavení a konfiguraci systému a plánování měření.
+        \end{enumerate}
+
+        \subsection{Použité technologie}\label{subsec:techstack}
+
+        Celá struktura systému je zpracována ve třech kontejnerech pomocí \href{https://docs.docker.com/compose/}{Docker Compose}:
+
+        \begin{itemize}
+            \item \href{https://vuejs.org/}{Vue.js} frontend – SPA
+            \item \href{https://fastapi.tiangolo.com/}{FastAPI} backend – REST API s vlastní dokumentací formou OpenAPI a Swagger
+            \item \href{https://www.postgresql.org/}{Postgres} db – ukládání naplánovaných úloh
+        \end{itemize}
+
+        Další použité technologie:
+
+        \begin{itemize}
+            \item \href{https://www.ni.com/en/shop/labview.html}{LabVIEW} – přijímá a zpracovává data z multispektrální kamery (MS). Musí běžet na PC v laboratoři.
+            Využívá se protokol GigE Vision a rozhraní \textbf{Gigabit Ethernet}
+            \item \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon} – pro plné fungování RGB kamery (v tomto projektu byla použita verze 8.1.0)
+            \item \href{https://github.com/basler/pypylon}{Pypylon} – ovládání RGB kamery přes \textbf{USB 3}
+            \item \href{https://github.com/agronholm/apscheduler}{APScheduler} – plánování úloh (měření)
+            \item \href{https://www.sqlalchemy.org/}{SQLAlchemy} – SQL toolkit a ORM pro Python
+            \item \href{https://www.cypress.io/}{Cypress} a \href{https://docs.pytest.org/en/stable/}{Pytest} – testování FE a BE
+            \item \href{https://workspace.google.com/products/drive/}{Google Drive} – nahrávání zazipovaných dat (akustická emise a fotky)
+            \item \href{https://www.alwaysdata.com/en/}{AlwaysData} – nasazení
+            \item \href{http://dakel.cz/index.php?pg=prod/dev/zedo_en}{ZEDO} a webové sockety – akustická emise (AE)
+        \end{itemize}
+
+        \section{Lokální vývoj}\label{sec:lokalni-vyvoj}
+
+        \subsection{Databáze}\label{subsec:databaze}
+
+        Nejprve je nutné sestavit a spustit Postgres databázi.
+        Lze to udělat dvěma způsoby: \href{https://www.postgresql.org/download/}{lokálně nainstalovat} nebo použít Docker.
+        V obou případech je nutné nastavit proměnné \texttt{PGDATA}, \texttt{POSTGRES\_DB}, \texttt{POSTGRES\_USER} a \texttt{POSTGRES\_PASSWORD} (jejich hodnoty jsou v souboru \texttt{docker-compose.yml}).
+
+        V případě Dockeru je nutné použít následující příkaz:
+
+        \begin{verbatim}
+            docker run --name soad-db -p 5002:5432 \
+            -e PGDATA=/var/lib/postgresql/data/db-files/ \
+            -e POSTGRES_DB=soad \
+            -e POSTGRES_USER=api \
+            -e POSTGRES_PASSWORD=changeit \
+            -v database_volume:/var/lib/postgresql/data/ postgres:17-alpine
+
+            # V případě, že neexistuje volume
+            docker volume create database_volume
+        \end{verbatim}
+
+        Je možné také jít cestou docker-compose:
+
+        \begin{verbatim}
+            # Pozor: udělá build všech služeb z .yml (BE, FE, db)
+            docker-compose build
+            docker-compose up database
+        \end{verbatim}
+
+        Po spuštění výše uvedených příkazů by se měla vytvořit databáze s názvem \texttt{soad}, kam se budou ukládat veškerá měření.
+        Postgres by měl běžet na portu \texttt{5002} a být připraven k akceptaci dotazů.
+
+        \subsection{Backend}\label{subsec:backend}
+
+        Po spuštění databáze můžeme připravit backend.
+        Je nutné mít nainstalovaný interpret jazyka \href{https://www.python.org/downloads/}{Python} (verze~$\geq$~3.11).
+        Lze použít i docker-compose, ale po každé změně ve zdrojovém kódu bude potřeba vytvořit nový image backendu.
+
+        Zpočátku vytvoříme virtuální prostředí a nainstalujeme závislosti.
+        Na macOS/Linux:
+
+        \begin{verbatim}
+            # soad/backend/
+            python3 -m venv venv
+
+            source venv/bin/activate
+
+            python3 -m pip install --upgrade pip
+
+            pip3 install -r requirements.txt
+        \end{verbatim}
+
+        \clearpage
+
+        Na Windows:
+
+        \begin{verbatim}
+            # soad/backend/
+            # Občas py nefunguje (záleží na instalaci), zkusit python3
+            py -m venv venv
+
+            venv\Scripts\activate
+
+            py -m pip install --upgrade pip
+
+            pip install -r requirements.txt
+        \end{verbatim}
+
+        Dále je nutné přidat soubor \,\texttt{.env}\,.
+        Záleží na přání vývojáře, jak ho vyplní, ale ukázkové nastavení enviromentálních
+        proměnných je možné nalézt v \texttt{soad/backend/.env.example}.
+        Poté můžeme spustit soubor \texttt{main.py}:
+
+        \begin{verbatim}
+            fastapi dev src/main.py
+        \end{verbatim}
+
+        Po krátké době se vytvoří FastAPI aplikace a poběží na adrese \href{http://localhost:5001}{http://localhost:5001}.
+        Na \href{http://localhost:5001/docs}{http://localhost:5001/docs} poběží Swagger dokumentace s popisem endpointů.
+
+        \subsection{Frontend}\label{subsec:frontend}
+
+        Nutnou podmínkou pro FE je nainstalovaný \href{https://nodejs.org/en/download}{Node.js}.
+        Dále je nutné přidat nezbytné závislosti:
+
+        \begin{verbatim}
+            # soad/frontend/
+            npm install
+        \end{verbatim}
+
+        Podobně jako u backendu je potřeba přidat soubor \texttt{.env} a vyplnit jej.
+        Ukázkové nastavení se nachází v
+        \texttt{soad/frontend/.env.example}.
+        Následně je potřeba spustit Vite dev server:
+
+        \begin{verbatim}
+            npm run dev
+        \end{verbatim}
+
+        Aplikace by měla běžet na adrese \href{http://localhost:5000}{http://localhost:5000}.
+
+        \subsection{docker-compose}\label{subsec:docker-compose}
+
+        Pro otestování aplikace v kontejnerech je nutné spustit níže uvedené příkazy:
+
+        \begin{verbatim}
+            docker-compose build
+            docker-compose up
+
+            # Vypne kontejnery
+            docker-compose down
+        \end{verbatim}
+
+        \subsection{LabVIEW}\label{subsec:labview}
+
+        Postačí jakákoliv stabilní verze \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}, která poběží na laboratorním PC\@.
+        MS musí být připojena přes \textbf{Gigabit Ethernet} a v operačním systému musí být
+        na rozhraní síťové karty nastavena maximální velikost jumbo packetů.
+
+        Po připojení kamery je potřeba otevřít \texttt{labview/} v LabVIEW prostředí.
+        V tomto adresáři se nachází:
+        \begin{itemize}
+            \item \texttt{LabVIEW 2012/} (nutný toolkit)
+            \item \texttt{lv\_gige/} (LabVIEW projekt)
+            \item \texttt{labview-control/} (FastAPI aplikace)
+        \end{itemize}
+
+        Před spuštěním je nutné nastavit parametry kamery.
+        Níže je příklad:
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.95\textwidth]{../../img/labview-hyperspectral-cam-settings}
+            \caption{Parametry MS v LabVIEW}
+            \label{fig:params_ms_labview}
+        \end{figure}
+
+        \begin{itemize}
+            \item \textbf{Path} – cesta k obrázku, který pořídí kamera
+            \item \textbf{CameraName} – musí být vybrána připojená MS
+            \item \textbf{Width \& Height} – musí odpovídat hodnotám, které jsou v DeviceModelName (zde například D2048x1088)
+            \item \textbf{Packet size} – musí být nastaven na hodnotu \textbf{8228}
+        \end{itemize}
+
+        Teprve teď můžeme spustit LabVIEW kód a FastAPI aplikaci v \texttt{labview-control/}.
+        LabVIEW bude každou sekundu vysílat HTTP GET dotaz a pokud dostane hodnotu \texttt{1}, tak se pořídí snímek, jinak čeká.
+        Dotaz je vysílán na FastAPI aplikaci.
+    \end{teamwork}
+\end{document}
