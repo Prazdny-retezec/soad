@@ -21,11 +21,7 @@ class SensorSettings(Base):
 
     # multi-spectral camera
     ms_image_count = Column(Integer)
-    ms_image_width = Column(Integer)
-    ms_image_height = Column(Integer)
     ms_sampling_delay = Column(Integer)
-    ms_exposure_time = Column(Integer)
-    ms_image_format = Column(Enum(ImageFormat))
 
     # acoustic emission
     ae_voltage_format = Column(Integer) # AE voltage in Volts: 0=not exported, 1=(int)nV, 2=(int)uV, 3=(float)uV, 4=(float)mV, 5=(float)V. Default=5.
