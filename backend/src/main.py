@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 
 from measurement.router import router as measurement_router
+from labview.router import router as labview_router
 from database import Base, engine
 from scheduler import scheduler
 from settings import AppSettings
@@ -43,12 +44,11 @@ app = FastAPI(
     license_info={
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
-    },)
+    },
+)
 
 # CORS
-origins = [
-    "http://localhost:5000",
-]
+origins = ["http://localhost:5000", ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,6 +60,7 @@ app.add_middleware(
 
 # registration of routers
 app.include_router(measurement_router)
+app.include_router(labview_router)
 
 
 # TODO replace by non-deprecated feature

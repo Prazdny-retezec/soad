@@ -7,11 +7,15 @@ from pypylon import pylon
 
 
 class RgbCameraController:
-    def __init__(self, output_dir: str, width: int, height: int):
+    def __init__(self, output_dir: str):
         self.output_dir = output_dir
+        self.width = 1920
+        self.height = 1080
+        self.device: pylon.InstantCamera | None = None
+
+    def configure_size(self, width, height):
         self.width = width
         self.height = height
-        self.device: pylon.InstantCamera | None = None
 
     def is_available(self) -> bool:
         return self.device is not None

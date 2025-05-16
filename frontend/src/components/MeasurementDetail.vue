@@ -343,6 +343,7 @@ export default {
     async unplanMeasurement(id) {
       const measurementStore = useMeasurementStore();
       await measurementStore.unplanMeasurement(id);
+      // Po unplanu změnit stav v detailu, aby UI správně reagovalo
       this.detail.state = 'NEW';
       this.detail.planned_at = null;
     },

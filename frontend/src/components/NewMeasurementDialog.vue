@@ -113,7 +113,9 @@
         </v-card-actions>
 
         <!-- Error Alert -->
+        <!-- Error Alert -->
         <v-row justify="center" class="my-2 px-4">
+          <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
           <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
         </v-row>
       </v-card>
@@ -176,7 +178,9 @@
         </v-row>
 
         <!-- Error Alert -->
+        <!-- Error Alert -->
         <v-row justify="center" class="my-2 px-4">
+          <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
           <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
         </v-row>
       </v-card>
@@ -217,6 +221,7 @@
     </v-card>
   </v-dialog>
 </template>
+
 
 <script>
 import { useMeasurementStore } from '@/store/MeasurementStore';
@@ -444,7 +449,6 @@ export default {
         this.isLoading = false;
       }
     },
-
 
     closeDialog() {
       this.selectedDate = null;
