@@ -13,23 +13,24 @@ router = APIRouter(
     tags=["Measurement"],
 )
 
+@router.get("/conflict")
+async def check_conflict(planFrom: str, service: MeasurementService = Depends(MeasurementService)):
+    # Převeďte přijatý čas na datetime
+    plan_from = datetime.fromisoformat(planFrom)
 
-@router.get(
-    path="",
-    summary="Získat seznam měření",
-    description="Vrací seznam všech uložených měření."
-)
+    # Kontrola konfliktu
+    conflict = service.check_for_conflicting_measurements(plan_from)
+
+    return {"conflict": conflict}
+
+@router.get("")
 async def list_measurements(
         service: MeasurementService = Depends(MeasurementService)
 ) -> List[MeasurementListDto]:
     return service.list_measurements()
 
 
-@router.get(
-    path="/{id}",
-    summary="Získat detail měření",
-    description="Vrací detailní informace o měření podle zadaného ID."
-)
+@router.get("/{id}")
 async def get_measurement(
         id: int,
         service: MeasurementService = Depends(MeasurementService)
