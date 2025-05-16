@@ -26,6 +26,23 @@
           <v-list-item v-if="detail.ended_at" title="Ended At" :subtitle="formatDate(detail.ended_at)"></v-list-item>
           <v-list-item title="State" :subtitle="detail.state"></v-list-item>
           <v-list-item v-if="detail.result" title="Result" :subtitle="detail.result"></v-list-item>
+
+          <!-- Display Sensor Settings -->
+          <v-list-item title="RGB Image Quality" :subtitle="detail.sensor_settings.rgb_image_quality"></v-list-item>
+          <v-list-item title="RGB Image Count" :subtitle="detail.sensor_settings.rgb_image_count"></v-list-item>
+          <v-list-item title="RGB Image Width" :subtitle="detail.sensor_settings.rgb_image_width"></v-list-item>
+          <v-list-item title="RGB Image Height" :subtitle="detail.sensor_settings.rgb_image_height"></v-list-item>
+          <v-list-item title="RGB Sampling Delay" :subtitle="detail.sensor_settings.rgb_sampling_delay"></v-list-item>
+          <v-list-item title="MS Image Count" :subtitle="detail.sensor_settings.ms_image_count"></v-list-item>
+          <v-list-item title="MS Image Width" :subtitle="detail.sensor_settings.ms_image_width"></v-list-item>
+          <v-list-item title="MS Image Height" :subtitle="detail.sensor_settings.ms_image_height"></v-list-item>
+          <v-list-item title="MS Sampling Delay" :subtitle="detail.sensor_settings.ms_sampling_delay"></v-list-item>
+          <v-list-item title="MS Exposure Time" :subtitle="detail.sensor_settings.ms_exposure_time"></v-list-item>
+          <v-list-item title="AE Voltage Format" :subtitle="detail.sensor_settings.ae_voltage_format"></v-list-item>
+          <v-list-item title="AE Voltage DBAE" :subtitle="detail.sensor_settings.ae_voltage_dbae"></v-list-item>
+          <v-list-item title="AE Counts Log" :subtitle="detail.sensor_settings.ae_counts_log"></v-list-item>
+          <v-list-item title="AE Counts Lin" :subtitle="detail.sensor_settings.ae_counts_lin"></v-list-item>
+          <v-list-item title="AE Energy Format" :subtitle="detail.sensor_settings.ae_energy_format"></v-list-item>
         </v-list>
 
         <!-- EDIT MODE -->
@@ -41,6 +58,102 @@
             label="Description"
             variant="outlined"
             auto-grow
+          />
+
+          <!-- SENSOR SETTINGS IN EDIT MODE -->
+          <v-divider class="my-4"></v-divider>
+          <v-card-title class="text-h5">Sensor Settings</v-card-title>
+
+          <!-- RGB Image Settings -->
+          <v-text-field 
+            v-model="editedSensorSettings.rgb_image_quality" 
+            label="RGB Image Quality" 
+            type="number" 
+            min="1" 
+            max="100" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.rgb_image_count" 
+            label="RGB Image Count" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.rgb_image_width" 
+            label="RGB Image Width" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.rgb_image_height" 
+            label="RGB Image Height" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.rgb_sampling_delay" 
+            label="RGB Sampling Delay (sec)" 
+            type="number" 
+            min="0" 
+          />
+
+          <!-- MS Image Settings -->
+          <v-text-field 
+            v-model="editedSensorSettings.ms_image_count" 
+            label="MS Image Count" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ms_image_width" 
+            label="MS Image Width" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ms_image_height" 
+            label="MS Image Height" 
+            type="number" 
+            min="1" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ms_sampling_delay" 
+            label="MS Sampling Delay (sec)" 
+            type="number" 
+            min="0" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ms_exposure_time" 
+            label="MS Exposure Time (ms)" 
+            type="number" 
+            min="0" 
+          />
+
+          <!-- AE Image Settings -->
+          <v-text-field 
+            v-model="editedSensorSettings.ae_voltage_format" 
+            label="AE Voltage Format" 
+            type="number" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ae_voltage_dbae" 
+            label="AE Voltage DBAE" 
+            type="number" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ae_counts_log" 
+            label="AE Counts Log" 
+            type="number" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ae_counts_lin" 
+            label="AE Counts Lin" 
+            type="number" 
+          />
+          <v-text-field 
+            v-model="editedSensorSettings.ae_energy_format" 
+            label="AE Energy Format" 
+            type="number" 
           />
         </v-container>
 
@@ -107,62 +220,6 @@
           >
             Plan
           </v-btn>
-
-          <!-- Plan Date Dialog -->
-          <v-dialog v-model="planDialog" max-width="500">
-            <v-card rounded="xl" class="pa-6">
-              <v-card-title class="text-h5">Set Plan Date and Time</v-card-title>
-              <v-card-text>
-                <!-- Plan From (Date + Time Picker) -->
-                <v-card-text class="subtitle text-dark-green font-weight-bold">Plan From</v-card-text>
-                <v-row justify="center" class="mb-4">
-                  <v-col cols="12">
-                    <v-date-picker v-model="selectedDateFrom" class="w-100" />
-                  </v-col>
-                  <v-col cols="12" class="mt-4">
-                    <v-time-picker v-model="selectedTimeFrom" format="24hr" scrollable class="w-100" />
-                  </v-col>
-                </v-row>
-
-                <!-- AE Delta Section -->
-                <v-card-text class="subtitle text-dark-green font-weight-bold">AE Delta</v-card-text>
-                <v-row justify="center" class="mb-4">
-                  <v-col cols="6">
-                    <v-text-field
-                      v-model="aeDeltaValue"
-                      label="AE Delta Value"
-                      type="number"
-                      min="1"
-                      variant="outlined"
-                      class="w-100"
-                    />
-                  </v-col>
-                  <v-col cols="6">
-                    <v-select
-                      v-model="aeDeltaUnit"
-                      label="AE Delta Unit"
-                      :items="['Seconds', 'Minutes', 'Hours', 'Days']"
-                      variant="outlined"
-                      class="w-100"
-                    />
-                  </v-col>
-                </v-row>
-              </v-card-text>
-
-              <v-card-actions class="justify-end">
-                <v-btn color="primary" variant="tonal" @click="submitPlan" class="mr-2">
-                  Save Plan
-                </v-btn>
-                <v-btn variant="text" @click="planDialog = false">
-                  Cancel
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-
-
-
-
         </v-card-actions>
       </v-card>
     </template>
@@ -170,8 +227,9 @@
 </template>
 
 <script>
-import Config from '@/config';
 import { useMeasurementStore } from '@/store/MeasurementStore';
+import axios from 'axios';
+import Config from '@/config';
 
 export default {
   name: 'MeasurementDetail',
@@ -188,16 +246,20 @@ export default {
       isEditing: false,
       editedName: '',
       editedDescription: '',
+      editedSensorSettings: {},
       planDialog: false,
       selectedDateFrom: null,
       selectedTimeFrom: null,
       aeDeltaValue: 3,
       aeDeltaUnit: 'Days',
-  };
+    };
   },
   async created() {
     const measurementStore = useMeasurementStore();
     this.detail = await measurementStore.getMeasurement(this.measurementId);
+    if (this.detail.sensor_settings) {
+      this.editedSensorSettings = { ...this.detail.sensor_settings };
+    }
   },
   methods: {
     formatDate(dateString) {
@@ -214,17 +276,38 @@ export default {
       this.editedName = this.detail.name;
       this.editedDescription = this.detail.description;
       this.isEditing = true;
+      this.editedSensorSettings = { ...this.detail.sensor_settings };
     },
     cancelEditing() {
       this.isEditing = false;
       this.editedName = '';
       this.editedDescription = '';
+      this.editedSensorSettings = {}; // Reset sensor settings
     },
 
-    // Plan Measurement Method
+    async submitUpdate() {
+      const dto = {
+        name: this.editedName,
+        description: this.editedDescription,
+        sensor_settings: this.editedSensorSettings, // Include sensor settings in the update
+      };
+
+      try {
+        const measurementStore = useMeasurementStore();
+        await measurementStore.updateMeasurement(this.detail.id, dto); // Update with sensor settings
+        this.detail = await measurementStore.getMeasurement(this.detail.id); // Refresh detail
+        this.isEditing = false;
+        alert('Measurement updated successfully.');
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating measurement.');
+      }
+    },
+
     openPlanDialog() {
       this.planDialog = true;
     },
+
     async submitPlan() {
       if (!this.selectedDateFrom || !this.selectedTimeFrom) {
         alert('Please select both date and time.');
@@ -246,12 +329,9 @@ export default {
         ae_delta: `${aeDeltaPrefix}${this.aeDeltaValue}${aeDeltaUnitChar}`,
       };
 
-      console.log('Plánované datum:', dto.plan_at);
-      console.log('AE Delta:', dto.ae_delta);
-
       try {
         const measurementStore = useMeasurementStore();
-        await measurementStore.planMeasurement(this.detail.id, dto.plan_at, dto.ae_delta); // opraveno tady!
+        await measurementStore.planMeasurement(this.detail.id, dto.plan_at, dto.ae_delta);
         this.detail = await measurementStore.getMeasurement(this.detail.id);
         this.planDialog = false;
         alert('Measurement successfully planned.');
@@ -261,42 +341,12 @@ export default {
       }
     },
 
-
-    async planMeasurement(id, planAt, aeDelta) {
-      try {
-        this.isLoading = true;
-        
-        const dto = {
-          plan_at: planAt,
-          ae_delta: aeDelta,
-        };
-        
-        const response = await axios.post(`${config.backendUrl}/measurement/${id}/plan`, dto);
-
-        const index = this.measurements.findIndex(m => m.id === id);
-        if (index !== -1) {
-          this.measurements[index] = { ...this.measurements[index], ...response.data };
-        }
-
-        this.error = null;
-        return response.data;
-      } catch (error) {
-        this.error = 'Cannot plan measurement';
-        console.error('Error planning measurement:', error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-
     async unplanMeasurement(id) {
       const measurementStore = useMeasurementStore();
       await measurementStore.unplanMeasurement(id);
       this.detail.state = 'NEW';  // Change state to NEW after unplanning
       this.detail.planned_at = null; // Remove planned_at
     },
-
-
   },
 };
 </script>
@@ -304,7 +354,7 @@ export default {
 <style scoped>
 .v-text-field,
 .v-textarea {
-  max-width: 90%;
+  max-width: 100%;
   margin: 0 auto;
 }
 </style>

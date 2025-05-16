@@ -91,30 +91,30 @@
           />
         </v-row>
 
+        <!-- Set Sensor Settings Button -->
+        <v-row justify="center" class="mb-4 px-4">
+          <v-btn @click="dialogSensorSettings = true" color="primary" rounded="xl" class="bg-dark-green mb-2">
+            Set Sensor Settings
+          </v-btn>
+        </v-row>
+
         <!-- Schedule Button -->
         <v-card-actions class="justify-center">
-          <v-btn 
-            @click="schedulePeriodicMeasurement" 
-            :disabled="isLoading" 
-            color="white" 
-            rounded="xl" 
-            class="bg-dark-green mb-2" 
+          <v-btn
+            @click="schedulePeriodicMeasurement"
+            :disabled="isLoading"
+            color="white"
+            rounded="xl"
+            class="bg-dark-green mb-2"
             style="width: 300px"
           >
             Schedule measurement
           </v-btn>
         </v-card-actions>
 
-        <!-- Error Alert (Moved Below Button) -->
+        <!-- Error Alert -->
         <v-row justify="center" class="my-2 px-4">
-          <v-alert
-            max-width="100%"
-            v-if="showAlert" 
-            closable
-            :title="errorMessage" 
-            type="error"
-            variant="tonal"
-          ></v-alert>
+          <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
         </v-row>
       </v-card>
 
@@ -122,23 +122,12 @@
       <v-card v-else title="Start one-time measurement" rounded="xl" class="px-4">
         <!-- Measurement Name -->
         <v-row justify="center" class="mb-4 px-4">
-          <v-text-field
-            v-model="measurementName"
-            label="Measurement Name"
-            variant="outlined"
-            class="w-100"
-          />
+          <v-text-field v-model="measurementName" label="Measurement Name" variant="outlined" class="w-100" />
         </v-row>
 
         <!-- Description -->
         <v-row justify="center" class="mb-4 px-4">
-          <v-textarea
-            v-model="measurementDescription"
-            label="Description"
-            variant="outlined"
-            auto-grow
-            class="w-100"
-          />
+          <v-textarea v-model="measurementDescription" label="Description" variant="outlined" auto-grow class="w-100" />
         </v-row>
 
         <!-- Date & Time -->
@@ -172,34 +161,66 @@
           </v-col>
         </v-row>
 
+        <!-- Set Sensor Settings Button -->
+        <v-row justify="center" class="mb-4 px-4">
+          <v-btn @click="dialogSensorSettings = true" color="primary" rounded="xl" class="bg-dark-green mb-2">
+            Set Sensor Settings
+          </v-btn>
+        </v-row>
+
         <!-- Start Button -->
         <v-row justify="center" class="mb-4 px-4">
-          <v-btn
-            color="dark-green"
-            rounded="xl"
-            class="my-4"
-            style="width: 300px"
-            @click="startOneTimeMeasurement"
-          >
+          <v-btn color="dark-green" rounded="xl" class="my-4" style="width: 300px" @click="startOneTimeMeasurement">
             Start measurement
           </v-btn>
         </v-row>
 
-        <!-- Alert -->
+        <!-- Error Alert -->
         <v-row justify="center" class="my-2 px-4">
-          <v-alert
-            max-width="100%"
-            v-model="showAlert"
-            closable
-            :title="errorMessage"
-            type="error"
-            variant="tonal"
-          ></v-alert>
+          <v-alert max-width="100%" v-if="showAlert" closable :title="errorMessage" type="error" variant="tonal"></v-alert>
         </v-row>
       </v-card>
     </template>
   </v-dialog>
+
+  <!-- Dialog for Sensor Settings -->
+  <v-dialog v-model="dialogSensorSettings" max-width="500px">
+    <v-card>
+      <v-card-title>
+        <span class="headline">Sensor Settings</span>
+      </v-card-title>
+
+      <v-card-text>
+        <!-- RGB Camera Settings -->
+        <v-text-field v-model="sensorSettings.rgb_image_quality" label="RGB Image Quality" type="number" min="1" max="100" />
+        <v-text-field v-model="sensorSettings.rgb_image_count" label="RGB Image Count" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.rgb_image_width" label="RGB Image Width" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.rgb_image_height" label="RGB Image Height" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.rgb_sampling_delay" label="RGB Sampling Delay (sec)" type="number" min="0" />
+
+        <!-- Multi-Spectral Camera Settings -->
+        <v-text-field v-model="sensorSettings.ms_image_count" label="MS Image Count" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.ms_image_width" label="MS Image Width" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.ms_image_height" label="MS Image Height" type="number" min="1" />
+        <v-text-field v-model="sensorSettings.ms_sampling_delay" label="MS Sampling Delay (sec)" type="number" min="0" />
+        <v-text-field v-model="sensorSettings.ms_exposure_time" label="MS Exposure Time (ms)" type="number" min="0" />
+
+        <!-- Acoustic Emission Settings -->
+        <v-text-field v-model="sensorSettings.ae_voltage_format" label="AE Voltage Format" type="number" />
+        <v-text-field v-model="sensorSettings.ae_voltage_dbae" label="AE Voltage DBAE" type="number" />
+        <v-text-field v-model="sensorSettings.ae_counts_log" label="AE Counts Log" type="number" />
+        <v-text-field v-model="sensorSettings.ae_counts_lin" label="AE Counts Lin" type="number" />
+        <v-text-field v-model="sensorSettings.ae_energy_format" label="AE Energy Format" type="number" />
+      </v-card-text>
+
+      <v-card-actions>
+        <v-btn text @click="dialogSensorSettings = false">Cancel</v-btn>
+        <v-btn color="primary" @click="saveSensorSettings">Save</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
+
 
 <script>
 import { useMeasurementStore } from '@/store/MeasurementStore';
@@ -214,25 +235,45 @@ export default {
   },
 
   data() {
-  return {
-    dialog: false, // Proměnná pro otevření/zavření dialogu
-    selectedDateFrom: null,
-    selectedTimeFrom: null,
-    selectedDateTo: null,
-    selectedTimeTo: null,
-    aeDeltaValue: 3,
-    aeDeltaUnit: 'Minutes',
-    periodValue: 3,
-    periodUnit: 'Days',
-    measurementName: '',
-    measurementDescription: '',
-    showAlert: false,
-    errorMessage: 'Invalid measurement setup!',
-    rules: {
-      required: (value) => !!value || 'Required.',
-    },
-  };
-},
+    return {
+      dialog: false,
+      dialogSensorSettings: false,
+      sensorSettings: {
+        rgb_image_quality: 90,
+        rgb_image_count: 5,
+        rgb_image_width: 1920,
+        rgb_image_height: 1080,
+        rgb_sampling_delay: 2,
+
+        ms_image_count: 2,
+        ms_image_width: 1920,
+        ms_image_height: 1080,
+        ms_sampling_delay: 5,
+        ms_exposure_time: 60,
+
+        ae_voltage_format: 5,
+        ae_voltage_dbae: 1,
+        ae_counts_log: 1,
+        ae_counts_lin: 1,
+        ae_energy_format: 1
+      },
+      measurementName: '',
+      measurementDescription: '',
+      aeDeltaValue: 3,
+      aeDeltaUnit: 'Minutes',
+      periodValue: 3,
+      periodUnit: 'Days',
+      selectedDateFrom: null,
+      selectedTimeFrom: null,
+      selectedDateTo: null,
+      selectedTimeTo: null,
+      showAlert: false,
+      errorMessage: '',
+      rules: {
+        required: (value) => !!value || 'Required.',
+      },
+    };
+  },
 
 
   setup() {
@@ -243,106 +284,99 @@ export default {
   },
   methods: {
     async schedulePeriodicMeasurement() {
-  // Zkontrolujte, zda jsou všechny povinné hodnoty vyplněny
-  if (!this.selectedDateFrom || !this.selectedTimeFrom || !this.periodValue || !this.periodUnit || !this.aeDeltaValue || !this.aeDeltaUnit || !this.measurementName) {
-    this.showAlert = true;
-    this.errorMessage = 'Please fill in all required fields.';
-    return;
-  }
+      // Validate all required fields
+      if (!this.selectedDateFrom || !this.selectedTimeFrom || !this.periodValue || !this.periodUnit || !this.aeDeltaValue || !this.aeDeltaUnit || !this.measurementName) {
+        this.showAlert = true;
+        this.errorMessage = 'Please fill in all required fields.';
+        return;
+      }
 
-  // Nastavení data a času pro "plan_from"
-  const planFrom = new Date(this.selectedDateFrom);
-  const [hoursFrom, minutesFrom] = this.selectedTimeFrom.split(':');
-  planFrom.setHours(parseInt(hoursFrom));
-  planFrom.setMinutes(parseInt(minutesFrom));
-  planFrom.setSeconds(0);
-  planFrom.setMilliseconds(0);
+      // Set plan_from time
+      const planFrom = new Date(this.selectedDateFrom);
+      const [hoursFrom, minutesFrom] = this.selectedTimeFrom.split(':');
+      planFrom.setHours(parseInt(hoursFrom));
+      planFrom.setMinutes(parseInt(minutesFrom));
+      planFrom.setSeconds(0);
+      planFrom.setMilliseconds(0);
 
-  // Kontrola, zda již není naplánováno měření v daném čase
-  const conflict = await this.checkForConflictingMeasurements(planFrom);
-  if (conflict) {
-    this.showAlert = true;
-    this.errorMessage = 'A measurement is already scheduled for the selected time.';
-    return;
-  }
+      // Check for conflicting measurements
+      const conflict = await this.checkForConflictingMeasurements(planFrom);
+      if (conflict) {
+        this.showAlert = true;
+        this.errorMessage = 'A measurement is already scheduled for the selected time.';
+        return;
+      }
 
-  // Kontrola, zda naplánovaný čas není v minulosti
-  const now = new Date();
-  if (planFrom <= now) {
-    this.showAlert = true;
-    this.errorMessage = 'The planned measurement time cannot be in the past.';
-    return;
-  }
+      const now = new Date();
+      if (planFrom <= now) {
+        this.showAlert = true;
+        this.errorMessage = 'The planned measurement time cannot be in the past.';
+        return;
+      }
 
-  // Kontrola, zda naplánovaný čas není příliš blízko s ohledem na ae_delta
-  const aeDeltaDuration = this.convertToDuration(`PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`);
-  if (planFrom <= now.getTime() + aeDeltaDuration) {
-    this.showAlert = true;
-    this.errorMessage = `The planned measurement time is too soon, considering the AE delta of ${this.aeDeltaValue} ${this.aeDeltaUnit}.`;
-    return;
-  }
+      // Convert ae_delta to valid time duration format
+      let aeDelta;
+      if (this.aeDeltaUnit === 'Days') {
+        aeDelta = `P${this.aeDeltaValue}DT0H0M`;  // Example: 1 Day = P1DT0H0M
+      } else if (this.aeDeltaUnit === 'Hours') {
+        aeDelta = `PT${this.aeDeltaValue}H`;  // Example: 1 Hour = PT1H
+      } else if (this.aeDeltaUnit === 'Minutes') {
+        aeDelta = `PT${this.aeDeltaValue}M`;  // Example: 1 Minute = PT1M
+      } else if (this.aeDeltaUnit === 'Seconds') {
+        aeDelta = `PT${this.aeDeltaValue}S`;  // Example: 1 Second = PT1S
+      }
 
-  // Nastavení "plan_to" pokud je vyplněno
-  const planTo = this.selectedDateTo ? new Date(this.selectedDateTo) : planFrom;
-  if (this.selectedDateTo) {
-    const [hoursTo, minutesTo] = this.selectedTimeTo.split(':');
-    planTo.setHours(parseInt(hoursTo));
-    planTo.setMinutes(parseInt(minutesTo));
-    planTo.setSeconds(0);
-    planTo.setMilliseconds(0);
-  }
+      // Set plan_to time if specified
+      const planTo = this.selectedDateTo ? new Date(this.selectedDateTo) : planFrom;
+      if (this.selectedDateTo) {
+        const [hoursTo, minutesTo] = this.selectedTimeTo.split(':');
+        planTo.setHours(parseInt(hoursTo));
+        planTo.setMinutes(parseInt(minutesTo));
+        planTo.setSeconds(0);
+        planTo.setMilliseconds(0);
+      }
 
-  // Kontrola, zda "plan_from" je dříve než "plan_to"
-  if (planFrom >= planTo) {
-    this.showAlert = true;
-    this.errorMessage = 'The "From" date and time must be earlier than the "To" date and time.';
-    return;
-  }
+      // Check that plan_from is earlier than plan_to
+      if (planFrom >= planTo) {
+        this.showAlert = true;
+        this.errorMessage = 'The "From" date and time must be earlier than the "To" date and time.';
+        return;
+      }
 
-  // **Kontrola počtu opakování**:
-  // Vypočteme, jaký je časový rozdíl mezi plan_from a plan_to v milisekundách.
-  const timeDiff = planTo - planFrom;
+      // Calculate the time differences and repetitions
+      const timeDiff = planTo - planFrom;
+      const periodDuration = this.convertToDuration(`PT${this.periodValue}${this.periodUnit.charAt(0)}`);
+      const maxAllowedPeriods = Math.floor(timeDiff / periodDuration);
 
-  // Poté spočítáme, kolik opakování se vejde do tohoto časového rámce.
-  const periodDuration = this.convertToDuration(`PT${this.periodValue}${this.periodUnit.charAt(0)}`);
+      if (this.periodValue > maxAllowedPeriods) {
+        this.showAlert = true;
+        this.errorMessage = `The number of repetitions exceeds the time frame. You can schedule a maximum of ${maxAllowedPeriods} repetitions.`;
+        return;
+      }
 
-  // Vypočteme maximální počet opakování, které se vejdou do časového intervalu
-  const maxAllowedPeriods = Math.floor(timeDiff / periodDuration);
+      // Prepare the data transfer object (DTO)
+      const periodValue = this.periodValue;
+      const periodUnit = this.periodUnit.charAt(0).toUpperCase();
 
-  // Pokud je zadaný počet opakování větší než maximální povolený počet, zobrazíme chybu.
-  if (this.periodValue > maxAllowedPeriods) {
-    this.showAlert = true;
-    this.errorMessage = `The number of repetitions exceeds the time frame. You can schedule a maximum of ${maxAllowedPeriods} repetitions.`;
-    return;
-  }
+      const dto = {
+        name: this.measurementName,
+        description: this.measurementDescription,
+        plan_from: planFrom.toISOString(),
+        plan_to: planTo.toISOString(),
+        period: `P${periodValue}${periodUnit}`,
+        ae_delta: aeDelta,
+      };
 
-  // Připravíme hodnoty pro DTO (Data Transfer Object)
-  const aeDelta = `PT${this.aeDeltaValue}${this.aeDeltaUnit.charAt(0)}`;
-  const periodValue = this.periodValue;
-  const periodUnit = this.periodUnit.charAt(0).toUpperCase();
-
-  const dto = {
-    name: this.measurementName,
-    description: this.measurementDescription,
-    plan_from: planFrom.toISOString(),
-    plan_to: planTo.toISOString(),
-    period: `P${periodValue}${periodUnit}`,
-    ae_delta: aeDelta,
-  };
-
-  try {
-    // Odeslání požadavku na backend pro vytvoření měření
-    const response = await axios.post(`${Config.backendUrl}/measurement/periodic`, dto);
-    console.log('Periodic measurements created successfully:', response.data);
-
-    // Zavřete dialog po úspěšném vytvoření měření
-    this.dialog = false;
-  } catch (error) {
-    this.showAlert = true;
-    this.errorMessage = 'Error creating periodic measurement!';
-    console.error('Error:', error);
-  }
-},
+      try {
+        const response = await axios.post(`${Config.backendUrl}/measurement/periodic`, dto);
+        console.log('Periodic measurements created successfully:', response.data);
+        this.dialog = false;
+      } catch (error) {
+        this.showAlert = true;
+        this.errorMessage = 'Error creating periodic measurement!';
+        console.error('Error:', error);
+      }
+    },
 
 
     // Funkce pro kontrolu konfliktů s existujícím měřením
@@ -433,6 +467,11 @@ export default {
         case 'days': return value * 24 * 60 * 60 * 1000;
         default: return 0;
       }
+    },
+
+    saveSensorSettings() {
+      console.log('Sensor settings saved:', this.sensorSettings);
+      this.dialogSensorSettings = false;
     },
 
     closeDialog() {

@@ -23,20 +23,14 @@ async def check_conflict(planFrom: str, service: MeasurementService = Depends(Me
 
     return {"conflict": conflict}
 
-@router.get("",
-    summary="Získat seznam měření",
-    description="Vrací seznam všech uložených měření."
-            )
+@router.get("")
 async def list_measurements(
         service: MeasurementService = Depends(MeasurementService)
 ) -> List[MeasurementListDto]:
     return service.list_measurements()
 
 
-@router.get("/{id}",
-    summary="Získat detail měření",
-    description="Vrací detailní informace o měření podle zadaného ID."
-            )
+@router.get("/{id}")
 async def get_measurement(
         id: int,
         service: MeasurementService = Depends(MeasurementService)
