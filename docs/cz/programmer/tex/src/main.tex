@@ -3,7 +3,8 @@
 
 \documentclass[12pt]{article}
 \usepackage{pdflscape}
-\usepackage{rotating} % otočení tabulky
+\usepackage{rotating}
+\usepackage{hyperref} % otočení tabulky
 
 \input{ltx-teamwork}
 
@@ -57,6 +58,7 @@
 
         Projekt byl vytvořen pomocí struktury \textbf{monorepo}.
         V jediném GitHub repozitáři se nachází veškerý zdrojový kód projektu.
+        Odkaz na repozitář: \href{https://github.com/Prazdny-retezec/soad}{https://github.com/Prazdny-retezec/soad}
         \\
         \\
         Byla použita klasická architektura klient-server.
@@ -85,7 +87,8 @@
         \begin{itemize}
             \item \href{https://www.ni.com/en/shop/labview.html}{LabVIEW} – přijímá a zpracovává data z multispektrální kamery (MS). Musí běžet na PC v laboratoři.
             Využívá se protokol GigE Vision a rozhraní \textbf{Gigabit Ethernet}
-            \item \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon} – pro plné fungování RGB kamery (v tomto projektu byla použita verze 8.1.0)
+            \item \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon} – pro plné fungování RGB kamery (v tomto projektu byla použita verze 8.1.0).
+            Musí být nainstalováno na laboratorním PC
             \item \href{https://github.com/basler/pypylon}{Pypylon} – ovládání RGB kamery přes \textbf{USB 3}
             \item \href{https://github.com/agronholm/apscheduler}{APScheduler} – plánování úloh (měření)
             \item \href{https://www.sqlalchemy.org/}{SQLAlchemy} – SQL toolkit a ORM pro Python
@@ -96,6 +99,16 @@
         \end{itemize}
 
         \section{Lokální vývoj}\label{sec:lokalni_vyvoj}
+
+        Celý systém je možné spustit dvěma způsoby.
+        Buďto prostřednictvím technologie Docker (respektive docker-compose) a nebo nativně.
+        Systém je možné spustit v ostrém režimu nebo v tzv. mock režimu.
+        To v jakém režimu se systém spustí lze nastavit pomocí enviromentálních proměnných.
+        \\
+        \\
+        V mock režimu bude systém produkovat pouze nepravdivé údaje.
+        Tyto údaje ovšem vychází z opravdových dat, jsou tedy naprosto realistické.
+        Tento režim se obzvlášť hodí v případě dalšího vývoje, kdy nejsou opravdové senzory k dispozici.
 
         \subsection{Databáze}\label{subsec:databaze}
 
@@ -148,8 +161,6 @@
             pip3 install -r requirements.txt
         \end{verbatim}
 
-        \clearpage
-
         Na Windows:
 
         \begin{verbatim}
@@ -175,8 +186,6 @@
 
         Po krátké době se vytvoří FastAPI aplikace a poběží na adrese \href{http://localhost:5001}{http://localhost:5001}.
         Na \href{http://localhost:5001/docs}{http://localhost:5001/docs} poběží Swagger dokumentace s popisem endpointů.
-        \\
-        \\
         Je důležité zmínit, že celá backendová služba je zabezpečena pomocí \textbf{Basic Auth}.
 
         \subsection{Frontend}\label{subsec:frontend}
@@ -200,6 +209,33 @@
 
         Aplikace by měla běžet na adrese \href{http://localhost:5000}{http://localhost:5000}.
 
+        \subsection{Nastavení environmentálních proměnných}\label{subsec:nastaveni-environmentalnich-promennych}
+
+        Jak bylo uvedeno v předchozích částech, je nutné nastavit proměnné prostředí pro FE i BE\@.
+        Níže je popis všech proměnných:
+
+        \begin{itemize}
+            \item FE:
+            \begin{itemize}
+                \item \texttt{VITE\_API\_URL} - odkaz na BE
+                \item \texttt{VITE\_ADMIN\_USERNAME} - přihlašovací jméno na FE
+                \item \texttt{VITE\_ADMIN\_PASSWORD} -- přihlašovací heslo na FE
+            \end{itemize}
+            \item BE:
+            \begin{itemize}
+                \item \texttt{DATABASE\_URL} - adresa Postgres databáze
+                \item \texttt{OUTPUT\_DIR} - absolutní cesta na adresář, kde se budou ukládat mezi-výsledky měření
+                \item \texttt{AE\_IP\_ADDRESS} - IP adresa akustické emise
+                \item \texttt{AE\_PORT} - port akustické emise
+                \item \texttt{MOCK\_DATA\_DIR} - absolutní cesta na adresář, který obsahuje modelová data
+                \item \texttt{GDRIVE\_CREDENTIALS\_DIR} - absolutní cesta na adresář obsahující přihlašovací údaje do Google Drive
+                \item \texttt{MOCK\_ACOUSTIC\_EMISSION} - pokud je TRUE, nastaví se mock režim pro AE (více o tom v Úvodu)
+                \item \texttt{MOCK\_RGB\_CAMERA} - pokud je TRUE, nastaví se mock režim pro RGB kameru (více o tom v Úvodu)
+                \item \texttt{MOCK\_MULTI\_SPECTRAL\_CAMERA} - pokud je TRUE, nastaví se mock režim pro MS kameru (více o tom v Úvodu)
+            \end{itemize}
+        \end{itemize}
+
+
         \subsection{docker-compose}\label{subsec:docker-compose}
 
         Pro otestování aplikace v kontejnerech je nutné spustit níže uvedené příkazy:
@@ -214,11 +250,12 @@
 
         \subsection{LabVIEW}\label{subsec:labview}
 
-        Postačí jakákoliv stabilní verze \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}, která poběží na laboratorním PC\@.
-        MS musí být připojena přes \textbf{Gigabit Ethernet} a v operačním systému musí být
-        na rozhraní síťové karty nastavena maximální velikost jumbo packetů.
+        LabVIEW slouží pro práci s multispektrální kamerou.
+        Postačí jakákoli stabilní verze \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}, která poběží na laboratorním PC\@.
+        Dané PC musí disponovat alespoň jedním portem USB 3 (připojení RGB kamery) a dvěma Ethernet rozhraními, přičemž alespoň jedno z nich bude Gigabit Ethernet (připojení MS kamery) a v operačním systému musí být
+        na rozhraní síťové karty nastavena \href{https://docs.adaptive-vision.com/4.7/studio/technical_issues/gigevision/EnablingJumboPackets.html}{maximální velikost jumbo packetů}.
 
-        Po připojení kamery je potřeba otevřít \texttt{labview/} v LabVIEW prostředí.
+        Po připojení MS kamery je potřeba otevřít \texttt{labview/} v LabVIEW prostředí.
         V tomto adresáři se nachází:
         \begin{itemize}
             \item \texttt{LabVIEW 2012/} (nutný toolkit)
