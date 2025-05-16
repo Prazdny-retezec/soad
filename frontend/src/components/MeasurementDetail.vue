@@ -66,32 +66,32 @@
 
           <!-- RGB Image Settings -->
           <v-text-field 
-            v-model="editedSensorSettings.rgb_image_quality" 
+            v-model.number="editedSensorSettings.rgb_image_quality" 
             label="RGB Image Quality" 
             type="number" 
             min="1" 
             max="100" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.rgb_image_count" 
+            v-model.number="editedSensorSettings.rgb_image_count" 
             label="RGB Image Count" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.rgb_image_width" 
+            v-model.number="editedSensorSettings.rgb_image_width" 
             label="RGB Image Width" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.rgb_image_height" 
+            v-model.number="editedSensorSettings.rgb_image_height" 
             label="RGB Image Height" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.rgb_sampling_delay" 
+            v-model.number="editedSensorSettings.rgb_sampling_delay" 
             label="RGB Sampling Delay (sec)" 
             type="number" 
             min="0" 
@@ -99,31 +99,31 @@
 
           <!-- MS Image Settings -->
           <v-text-field 
-            v-model="editedSensorSettings.ms_image_count" 
+            v-model.number="editedSensorSettings.ms_image_count" 
             label="MS Image Count" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ms_image_width" 
+            v-model.number="editedSensorSettings.ms_image_width" 
             label="MS Image Width" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ms_image_height" 
+            v-model.number="editedSensorSettings.ms_image_height" 
             label="MS Image Height" 
             type="number" 
             min="1" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ms_sampling_delay" 
+            v-model.number="editedSensorSettings.ms_sampling_delay" 
             label="MS Sampling Delay (sec)" 
             type="number" 
             min="0" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ms_exposure_time" 
+            v-model.number="editedSensorSettings.ms_exposure_time" 
             label="MS Exposure Time (ms)" 
             type="number" 
             min="0" 
@@ -131,27 +131,27 @@
 
           <!-- AE Image Settings -->
           <v-text-field 
-            v-model="editedSensorSettings.ae_voltage_format" 
+            v-model.number="editedSensorSettings.ae_voltage_format" 
             label="AE Voltage Format" 
             type="number" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ae_voltage_dbae" 
+            v-model.number="editedSensorSettings.ae_voltage_dbae" 
             label="AE Voltage DBAE" 
             type="number" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ae_counts_log" 
+            v-model.number="editedSensorSettings.ae_counts_log" 
             label="AE Counts Log" 
             type="number" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ae_counts_lin" 
+            v-model.number="editedSensorSettings.ae_counts_lin" 
             label="AE Counts Lin" 
             type="number" 
           />
           <v-text-field 
-            v-model="editedSensorSettings.ae_energy_format" 
+            v-model.number="editedSensorSettings.ae_energy_format" 
             label="AE Energy Format" 
             type="number" 
           />
@@ -228,7 +228,6 @@
 
 <script>
 import { useMeasurementStore } from '@/store/MeasurementStore';
-import axios from 'axios';
 import Config from '@/config';
 
 export default {
@@ -282,20 +281,20 @@ export default {
       this.isEditing = false;
       this.editedName = '';
       this.editedDescription = '';
-      this.editedSensorSettings = {}; // Reset sensor settings
+      this.editedSensorSettings = {};
     },
 
     async submitUpdate() {
       const dto = {
         name: this.editedName,
         description: this.editedDescription,
-        sensor_settings: this.editedSensorSettings, // Include sensor settings in the update
+        sensor_settings: this.editedSensorSettings, // musí obsahovat i rgb_image_format, ms_image_format atd.
       };
 
       try {
         const measurementStore = useMeasurementStore();
-        await measurementStore.updateMeasurement(this.detail.id, dto); // Update with sensor settings
-        this.detail = await measurementStore.getMeasurement(this.detail.id); // Refresh detail
+        await measurementStore.updateMeasurement(this.detail.id, dto);
+        this.detail = await measurementStore.getMeasurement(this.detail.id);
         this.isEditing = false;
         alert('Measurement updated successfully.');
       } catch (error) {
@@ -344,8 +343,8 @@ export default {
     async unplanMeasurement(id) {
       const measurementStore = useMeasurementStore();
       await measurementStore.unplanMeasurement(id);
-      this.detail.state = 'NEW';  // Change state to NEW after unplanning
-      this.detail.planned_at = null; // Remove planned_at
+      this.detail.state = 'NEW';
+      this.detail.planned_at = null;
     },
   },
 };
