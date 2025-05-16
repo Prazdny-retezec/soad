@@ -7,7 +7,7 @@ o softwarový nástroj, který poběží v laboratorních podmínkách, bude dat
 
 ## Technologický stack
 
-Celá struktura systému je zpracována ve třech kontejnerech pomocí [Docker Compose](https://docs.docker.com/compose/):
+Celá struktura systému je zpracována ve třech kontejnerech pomocí [docker-compose](https://docs.docker.com/compose/):
 
 - [Vue.js](https://vuejs.org/) frontend - SPA
 - [FastAPI](https://fastapi.tiangolo.com/) backend - REST API s vlastní dokumentací formou OpenAPI a Swagger
@@ -21,12 +21,26 @@ Další použité technologie:
 - [Pypylon](https://github.com/basler/pypylon) - ovladání RGB kamery přes **USB 3**
 - [APScheduler](https://github.com/agronholm/apscheduler) - plánování úloh (měření)
 - [SQLAlchemy](https://www.sqlalchemy.org/) - SQL toolkit a ORM pro Python
-- [Cypress](https://www.cypress.io/) a [Pytest](https://docs.pytest.org/en/stable/) - testování FE a BE 
+- [Pytest](https://docs.pytest.org/en/stable/) - testování BE 
 - [Google Drive](https://workspace.google.com/products/drive/) - nahrávání zazipovaných dat (akustická emis a fotky)
 - [AlwaysData](https://www.alwaysdata.com/en/) - nasazení
 - Webové sockety a [ZEDO](http://dakel.cz/index.php?pg=prod/dev/zedo_en) - akustická emise (AE)
 
 ## Dokumentace
 
-- [Programátorská příručka](docs/cz/programmer/programmer.md)
+- [Programátorská příručka](docs/cz/programmer/tex/out/main.pdf)
+- [Uživatelský manuál](docs/cz/user/tex/out/main.pdf)
 
+## Autoři
+
+- **Matěj Cajthaml** - manažer
+- **Daniil Astapenko** - analýza, tech-writing
+- **Miroslav Filas** - vývoj (BE)
+- **Simona Horáčková** - design, vývoj (FE)
+- **Petr Chatrný** - technologický leader, vývoj (BE)
+- **Dávid Chomo** - vývoj (BE, FE)
+- **Otakar Nosek** - analýza, testing
+- **Martin Rafaj** - analýza, QA
+- **Lucie Suchánková** - design, vývoj (FE)
+- **Miroslav Šutera** - zástupce manažera, DevOps
+- **David Vlastník** - vývoj (LabVIEW), tech-writing
