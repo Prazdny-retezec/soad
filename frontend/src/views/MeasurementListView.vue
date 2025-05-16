@@ -171,7 +171,7 @@ import { useMeasurementStore } from '@/store/MeasurementStore';
 import Config from '@/config';
 
 export default {
-  name: 'HomeView',
+  name: 'MeasurementListView',
   components: {
     MeasurementDetail,
     NewMeasurementDialog,
