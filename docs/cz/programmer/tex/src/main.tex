@@ -37,18 +37,38 @@
 \begin{document}
 
     \begin{teamwork}
-        \section{Základní popis projektu}\label{sec:zakld-popis}
-        Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat.
+        \section{Úvod}\label{sec:uvod}
 
-        \subsection{Funkcionalita}\label{subsec:funkcionalita}
+        Tento dokument slouží jako programátorská dokumentace k softwarovému dílu SOAD (Synchronizace obrazových a akustických dat).
+        SOAD je laboratorní aplikace, která slouží ke sběru, agregaci a uchovávání naměřených údajů z různých senzorů.
+        \\
+        \\
+        Systém umí číst data z akustické emise (zařízení ZEDO). Dále pak umí komunikovat s RGB kamerou firmy Basler a touto komunikací
+        je schopný pořizovat a ukládat snímky.
+        Nakonec také umí komunikovat s multispektrální kamerou od firmy Basler a to pomocí technologie LabVIEW\@.
+        \\
+        \\
+        Výsledná data, která je systém schopný ze senzorů vyčíst či je pomocí nich pořídit, jsou komprimována a agregována pomocí archivace
+        do jednoho souboru.
+        Výsledný archivní soubor je nakonec nahráván na cloudové úložiště.
+        Celý software je možné ovládat pomocí webového rozhraní (viz \href{https://github.com/Prazdny-retezec/soad/blob/11-programatorska-dokumentace/docs/cz/user/tex/out/main.pdf}{Uživatelský manual})
 
-        \begin{enumerate}
-            \item \textbf{Získávání dat ze senzorů} -- čtení a sbírání dat z~různých senzorů, konkrétně z~akustických senzorů a kamer (RGB, multispektrální).
-            \item \textbf{Ukládání dat} -- data jsou uchována lokálně a následně synchronizována do centrálního úložiště (cloud).
-            \item \textbf{Automatická transformace dat} -- data jsou automaticky transformovaná do vhodných formátů (PNG, TIFF, \ldots).
-            \item \textbf{Automatické spuštění a nastavení měření} -- podpora automatického spuštění měření na základe definovaných kritérií (čas, událost).
-            \item \textbf{Webová administrace} -- uživatelské rozhraní, které poskytuje možnost nastavení a konfiguraci systému a plánování měření.
-        \end{enumerate}
+        \subsection{Architektura}\label{subsec:architektura}
+
+        Projekt byl vytvořen pomocí struktury \textbf{monorepo}.
+        V jediném GitHub repozitáři se nachází veškerý zdrojový kód projektu.
+        \\
+        \\
+        Byla použita klasická architektura klient-server.
+        Klient slouží k ovládání celého systému prostřednictvím grafického rozhraní a komunikuje se serverem.
+        Server obsahuje většinu výpočetní logiky:
+        \begin{itemize}
+            \item Komunikuje s jednotlivými senzory.
+            Získává z nich data, případně je jinak ovládá.
+            \item  Získaná data agreguje a komprimuje.
+            \item Zároveň rovněž ukládá všechna data pro obsluhu měření do centrální databáze systému.
+            \item Nakonec také komunikuje s cloudovým úložištěm, autentizuje se u něj a nahrává na něj výsledné archivy dat.
+        \end{itemize}
 
         \subsection{Použité technologie}\label{subsec:techstack}
 
@@ -75,7 +95,7 @@
             \item \href{http://dakel.cz/index.php?pg=prod/dev/zedo_en}{ZEDO} a webové sockety – akustická emise (AE)
         \end{itemize}
 
-        \section{Lokální vývoj}\label{sec:lokalni-vyvoj}
+        \section{Lokální vývoj}\label{sec:lokalni_vyvoj}
 
         \subsection{Databáze}\label{subsec:databaze}
 
@@ -155,6 +175,9 @@
 
         Po krátké době se vytvoří FastAPI aplikace a poběží na adrese \href{http://localhost:5001}{http://localhost:5001}.
         Na \href{http://localhost:5001/docs}{http://localhost:5001/docs} poběží Swagger dokumentace s popisem endpointů.
+        \\
+        \\
+        Je důležité zmínit, že celá backendová služba je zabezpečena pomocí \textbf{Basic Auth}.
 
         \subsection{Frontend}\label{subsec:frontend}
 

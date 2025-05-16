@@ -43,80 +43,68 @@
         Tento stroj musí:
 
         \begin{enumerate}
-            \item mít nainstalované \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}
-            \item obsahovat síťovou kartu s alespoň dvěma Ethernet rozhraními, přičemž alespoň jedno z
+            \item Mít nainstalované \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}
+            \item Obsahovat síťovou kartu s alespoň dvěma Ethernet rozhraními, přičemž alespoň jedno z
             nich bude Gigabit Ethernet (připojení hyperspektrální kamery)
-            \item obsahovat alespoň jeden port USB 3 (připojení RGB kamery)
-            \item mít nainstalovanou řadiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
+            \item V operačním systému musí být rozhraní síťové karty nastaveno tak, aby přijímalo jumbo pakety o maximální velikosti
+            \item Obsahovat alespoň jeden port USB 3 (připojení RGB kamery)
+            \item Mít nainstalovanou řadiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
         \end{enumerate}
 
 
         \section{Přihlášení do aplikace}\label{sec:prihlaseni-do-aplikace}
 
-        Než uživatel začne pracovat v aplikaci, je nutné se přihlásit.
-        Postup je následující:
-
-        \begin{enumerate}
-            \item Na domovské stránce klikněte na tlačítko „LOG IN“
-            \begin{figure}[hbt!]
-                \centering
-                \includegraphics[width=0.8\textwidth]{../../img/main_page}
-                \caption{Tlačítko pro přihlášení}
-                \label{fig:tlacitko_pro_prih}
-            \end{figure}
-            \item Vyplňte uživatelské jméno a heslo.
-            Pokud programátor použil příklad souboru \texttt{.env}, je to \textbf{admin} \textbf{admin}
-            \item Přihlásíte se kliknutím na tlačítko „LOG ME IN“
-            \begin{figure}[hbt!]
-                \centering
-                \includegraphics[width=0.45\textwidth]{../../img/login_box}
-                \caption{Přihlášovací formulář}
-                \label{fig:login_box}
-            \end{figure}
-        \end{enumerate}
-
-        \section{Nastavení senzorů}\label{sec:nastaveni-senzoru}
-
-        Parametry jednotlivých zařízení lze nastavit na stránce „Configuration“ (tlačítko v horní části stránky).
-        Je možné upravit parametry RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
-
-        \subsection{RGB kamera}\label{subsec:rgb-kamera}
-
-        Na obrázku 3 se nachází tabulka pro nastavení parametrů RGB kamery.
-        U tohoto zařízení lze pomocí posuvníků
-        potažením směrem vpravo či vlevo nastavit vzorkovací frekvenci a počet snímků.
-        Pod nimi se nachází dvě textová
-        pole, která umožňují nastavit, kdy kamera začne snímat (vlevo) a časový interval snímání (vpravo).
+        Před zahájením práce s aplikací se musíte přihlásit.
+        Na domovské stránce zadejte přihlašovací jméno a heslo.
+        Pokud programátor použil příklad souboru \texttt{.env}, je to \textbf{admin} \textbf{admin}
+        Následně klikněte na tlačítko „LOG IN“.
 
         \begin{figure}[hbt!]
             \centering
-            \includegraphics[width=0.7\textwidth]{../../img/rgb_cam_settings}
+            \includegraphics[width=0.8\textwidth]{../../img/main_page}
+            \caption{Stránka pro přihlášení}
+            \label{fig:tlacitko_pro_prih}
+        \end{figure}
+
+        \section{Nastavení senzorů}\label{sec:nastaveni-senzoru}
+
+        Parametry jednotlivých zařízení lze nastavit na stránce „Sensor Settings“ (tlačítko v horní části stránky).
+        Je možné upravit parametry RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
+        Je nutné podotknout, že tato stránka slouží jako \textbf{výchozí} nastavení měřících senzorů.
+        Tyto hodnoty se použijí v případě, když uživatel nezmění nastavení senzorů při tvorbě měření (viz Obrázek 6, sekce Zahájení měření).
+
+        \subsection{RGB kamera}\label{subsec:rgb-kamera}
+
+        Na obrázku 2 se nachází tabulka pro nastavení parametrů RGB kamery.
+        U tohoto zařízení lze nastavit počet snímků (první posuvník), časový interval mezi snímky, rozměry snímku, kvalitu (druhý posuvník) a formát.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.9\textwidth]{../../img/rgb_cam_settings}
             \caption{Tabulka pro nastavení RGB kamery}
             \label{fig:rgb_cam_settings}
         \end{figure}
 
         \subsection{Hyperspektrální kamera}\label{subsec:hyperspektralni-kamera}
 
-        Nastavení hyperspektrální kamery, které je zobrazeno na obrázku 4,
-        je shodné s nastavením RGB kamery (viz předchozí sekce RGB kamera).
+        V nastavení hyperspektrální kamery, které je zobrazeno na obrázku 3,
+        lze pomocí posuvníku změnit počet snímků a pomocí textového políčka lze nastavit časový interval mezi snímky.
 
         \begin{figure}[hbt!]
             \centering
-            \includegraphics[width=0.7\textwidth]{../../img/multi_cam_settings}
+            \includegraphics[width=0.9\textwidth]{../../img/multi_cam_settings}
             \caption{Tabulka pro nastavení multispektrální kamery}
             \label{fig:multi_cam_settings}
         \end{figure}
 
         \subsection{Akustická emise}\label{subsec:akusticka-emise}
 
-        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení vzorkovací frekvence, prahové hodnoty a doby
-        definice vrcholu, které se provádí pohybem posuvníku vpravo nebo vlevo.
-        Pod nimi se nachází okno pro nastavení
-        doby, po kterou bude měření pomocí tohoto zařízení probíhat.
+        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení formátu nápětí, exportního módu a formátu energie.
+        Volitelně můžeme také exportovat napětí akustické emise jako \textit{decibel scale} (dBAE).
 
         \begin{figure}[hbt!]
             \centering
-            \includegraphics[width=0.8\textwidth]{../../img/ae_settings}
+            \includegraphics[width=0.95\textwidth]{../../img/ae_settings}
             \caption{Tabulka pro nastavení akustické emise}
             \label{fig:ae_settings}
         \end{figure}
@@ -127,7 +115,7 @@
         Postup je následující:
 
         \begin{enumerate}
-            \item Klikněte na tlačítko „MEASURE“, které se nachází v pravém horním rohu stránky (obrázek 6).
+            \item Klikněte na tlačítko „MEASURE“, které se nachází v pravém horním rohu stránky (obrázek 5)
             \begin{figure}[hbt!]
                 \centering
                 \includegraphics[width=0.32\textwidth]{../../img/measure_one_time_button}
@@ -135,10 +123,12 @@
                 \label{fig:measure_one_time}
             \end{figure}
             \item Z nabídky vyberte první variantu „One time measurement“
-            \item V dialogovém okně uveďte název měření, popis a zvolte vhodný čas a parametry
+            \item V dialogovém okně uveďte název měření, popis a zvolte vhodný čas
+            \item Můžete tady změnit nastavení senzorů, které se aplkují pouze na toto měření.
+            Jinak se použije výchozí (viz začatek sekce 4 Nastavení senzorů)
             \begin{figure}[hbt!]
                   \centering
-                  \includegraphics[width=0.8\textwidth]{../../img/one_time_measure_dialog}
+                  \includegraphics[width=0.95\textwidth]{../../img/one_time_measure_dialog}
                   \caption{Dialogové okno}
                   \label{fig:one_time_measure_dialog}
             \end{figure}
