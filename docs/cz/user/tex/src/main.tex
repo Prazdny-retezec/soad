@@ -34,29 +34,27 @@
 
         \section{O aplikaci}\label{sec:o-aplikace}
 
-        Tato aplikace slouží ke spouštění senzoru a kamer, které získávají data o stavu rostlin.
-        V aplikaci po přihlášení lze měření zahajovat i plánovat na určitý den a čas, sledovat historii meření,
-        stahovat data a v neposlední řadě nastavovat parametry měření.
+        Tato aplikace slouží k získávání dat o stavu rostlin ze senzorů akustické emise, RGB kamery a hyperspektrální kamery.
+        V aplikaci lze po přihlášení nastavovat parametry měření, naplánovat jej na určitý den a čas, zahájit měření okamžitě, zobrazit seznam historie meření a stahovat získaná data.
 
         \section{Prerekvizity}\label{sec:prerekvizity}
 
-        Pro provoz celého systému s připojenými senzory je nutné, aby stroj, na kterém bude tento
-        systém poběží, splňoval určité náležitosti.
+        Je nutné, aby stroj který bude systém provozovat (a ke kterému budou připojeny senzory), splňoval určité náležitosti.
         Tento stroj musí:
 
         \begin{enumerate}
             \item mít nainstalované \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}
             \item obsahovat síťovou kartu s alespoň dvěma Ethernet rozhraními, přičemž alespoň jedno z
-            nich bude Gigabit Ethernet (připojení MS kamery)
+            nich bude Gigabit Ethernet (připojení hyperspektrální kamery)
             \item obsahovat alespoň jeden port USB 3 (připojení RGB kamery)
-            \item mít nainstalovanou radiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
+            \item mít nainstalovanou řadiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
         \end{enumerate}
 
 
         \section{Přihlášení do aplikace}\label{sec:prihlaseni-do-aplikace}
 
         Než uživatel začne pracovat v aplikaci, je nutné se přihlásit.
-        Níže je postup:
+        Postup je následující:
 
         \begin{enumerate}
             \item Na domovské stránce klikněte na tlačítko „LOG IN“
@@ -79,8 +77,8 @@
 
         \section{Nastavení senzorů}\label{sec:nastaveni-senzoru}
 
-        Parametry jednotlivých zařízení lze nastavit na stránce „Configuration“ (tlačítko nahoře stránky).
-        Celkově je možné upravit parametry u RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
+        Parametry jednotlivých zařízení lze nastavit na stránce „Configuration“ (tlačítko v horní části stránky).
+        Je možné upravit parametry RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
 
         \subsection{RGB kamera}\label{subsec:rgb-kamera}
 
@@ -88,7 +86,7 @@
         U tohoto zařízení lze pomocí posuvníků
         potažením směrem vpravo či vlevo nastavit vzorkovací frekvenci a počet snímků.
         Pod nimi se nachází dvě textová
-        pole, kde se nastavuje, kdy kamera začne snímat (vlevo) a časový interval snímání (vpravo).
+        pole, která umožňují nastavit, kdy kamera začne snímat (vlevo) a časový interval snímání (vpravo).
 
         \begin{figure}[hbt!]
             \centering
@@ -111,10 +109,10 @@
 
         \subsection{Akustická emise}\label{subsec:akusticka-emise}
 
-        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení vzorkovací frekvence, prahová hodnota a doba
-        definice vrcholu, které se provádí posuvníkem pohybem směrem vpravo nebo vlevo.
-        Pod nimi je okno, kde se nastavuje
-        doba, po kterou bude měření pomocí tohoto zařízení probíhat.
+        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení vzorkovací frekvence, prahové hodnoty a doby
+        definice vrcholu, které se provádí pohybem posuvníku vpravo nebo vlevo.
+        Pod nimi se nachází okno pro nastavení
+        doby, po kterou bude měření pomocí tohoto zařízení probíhat.
 
         \begin{figure}[hbt!]
             \centering
@@ -147,8 +145,8 @@
             \item Měření zahájíte kliknutím na tlačítko „START MEASUREMENT“ (na konci dialogu)
         \end{enumerate}
 
-        Proces vytváření periodického měření je podobný, jenom s tím rozdílem, že je třeba zvolit dva termíny.
-        Pokud se měření nepodaří vytvořit, zobrazí se na konci dialogového okna upozornění.
+        Proces konfigurace periodického měření je podobný, pouze s tím rozdílem, že je třeba zvolit dva termíny.
+        Pokud se měření nepodaří vytvořit, na konci dialogového okna bude zobrazeno upozornění.
 
 
 
