@@ -86,8 +86,6 @@ class MeasurementService:
     def create_periodic_measurement(self, dto: MeasurementCreatePeriodicDto) -> List[Measurement]:
         measurements = []
 
-        # TODO validation
-
         current_time = dto.plan_from
         while current_time <= dto.plan_to:
             single_dto = MeasurementCreateDto(name=dto.name, description=dto.description, plan_at=current_time,
@@ -100,15 +98,17 @@ class MeasurementService:
     def update_measurement(self, measurement_id: int, dto: MeasurementUpdateDto) -> Measurement:
         measurement = self.get_measurement(measurement_id)
 
-        # map DTO to entity
         measurement.name = dto.name
         measurement.description = dto.description
 
-        # TODO validation
+        if dto.sensor_settings is not None:
+            measurement.sensor_settings = dto.sensor_settings.to_entity()
+        else:
+            pass
 
-        # update entity in database
         measurement = self.__save_measurement(measurement)
         return measurement
+
 
     def delete_measurement(self, measurement_id: int):
         query = (self.db
