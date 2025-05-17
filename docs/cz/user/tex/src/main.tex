@@ -1,0 +1,155 @@
+%! Author = Daniil
+%! Date = 15.05.25
+
+\documentclass[12pt]{article}
+\usepackage{pdflscape}
+\usepackage{rotating} % otočení tabulky
+
+\input{ltx-teamwork}
+
+% +-----------+
+% | Nastavení |
+% +-----------+
+\begin{luacode*}
+  university = "Mendelova univerzita v~Brně"
+  faculty = "Provozně ekonomická fakulta"
+  title = "Synchronizace obrazových a akustických dat"
+  subject = "ENC-NSS: Nasazení software a služeb"
+  document_type = "uživatelský manuál"
+  place = "Brno"
+  date = "15. 5. 2025"
+  keywords = "ASS, NSS"
+
+  -- autoři (je nutné, si hlídat abecední pořadí jmen ručně)
+  authors = {}
+  authors[1] = {name = "Prázdný řetězec", program = "Otevřená informatika (N-OI)"}
+\end{luacode*}
+
+% +---------------+
+% | Samotná práce |
+% +---------------+
+\begin{document}
+
+    \begin{teamwork}
+
+        \section{O aplikaci}\label{sec:o-aplikace}
+
+        Tato aplikace slouží k získávání dat o stavu rostlin ze senzorů akustické emise, RGB kamery a hyperspektrální kamery.
+        V aplikaci lze po přihlášení nastavovat parametry měření, naplánovat jej na určitý den a čas, zahájit měření okamžitě, zobrazit seznam historie meření a stahovat získaná data.
+
+        \section{Prerekvizity}\label{sec:prerekvizity}
+
+        Je nutné, aby stroj který bude systém provozovat (a ke kterému budou připojeny senzory), splňoval určité náležitosti.
+        Tento stroj musí:
+
+        \begin{enumerate}
+            \item Mít nainstalované \href{https://www.ni.com/en/support/downloads/software-products/download.labview.html#559067}{LabVIEW}
+            \item Obsahovat síťovou kartu s alespoň dvěma Ethernet rozhraními, přičemž alespoň jedno z
+            nich bude Gigabit Ethernet (připojení hyperspektrální kamery)
+            \item V operačním systému musí být rozhraní síťové karty nastaveno tak, aby přijímalo \href{https://docs.adaptive-vision.com/4.7/studio/technical_issues/gigevision/EnablingJumboPackets.html}{jumbo pakety o maximální velikosti}
+            \item Obsahovat alespoň jeden port USB 3 (připojení RGB kamery)
+            \item Mít nainstalovanou řadiče a knihovnu \href{https://www.baslerweb.com/en/downloads/software/?downloadCategory.values.label.data=pylon}{Pylon od společnosti Basler (8.1.0)} (ovládání RGB kamery)
+        \end{enumerate}
+
+
+        \section{Přihlášení do aplikace}\label{sec:prihlaseni-do-aplikace}
+
+        Před zahájením práce s aplikací se musíte přihlásit.
+        Na domovské stránce zadejte přihlašovací jméno a heslo.
+        Pokud programátor použil příklad souboru \texttt{.env}, je to \textbf{admin} \textbf{admin}
+        Následně klikněte na tlačítko „LOG IN“.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.8\textwidth]{../../img/main_page}
+            \caption{Stránka pro přihlášení}
+            \label{fig:tlacitko_pro_prih}
+        \end{figure}
+
+        \section{Nastavení senzorů}\label{sec:nastaveni-senzoru}
+
+        Parametry jednotlivých zařízení lze nastavit na stránce „Sensor Settings“ (tlačítko v horní části stránky).
+        Je možné upravit parametry RGB kamery, hyperspektrální kamery a zařízení na měření akustické emise.
+        Je nutné podotknout, že tato stránka slouží jako \textbf{výchozí} nastavení měřících senzorů.
+        Tyto hodnoty se použijí v případě, když uživatel nezmění nastavení senzorů při tvorbě měření (viz Obrázek 6, sekce Zahájení měření).
+
+        \subsection{RGB kamera}\label{subsec:rgb-kamera}
+
+        Na obrázku 2 se nachází tabulka pro nastavení parametrů RGB kamery.
+        U tohoto zařízení lze nastavit počet snímků (první posuvník), časový interval mezi snímky, rozměry snímku, kvalitu (druhý posuvník) a formát.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.9\textwidth]{../../img/rgb_cam_settings}
+            \caption{Tabulka pro nastavení RGB kamery}
+            \label{fig:rgb_cam_settings}
+        \end{figure}
+
+        \subsection{Hyperspektrální kamera}\label{subsec:hyperspektralni-kamera}
+
+        V nastavení hyperspektrální kamery, které je zobrazeno na obrázku 3,
+        lze pomocí posuvníku změnit počet snímků a pomocí textového políčka lze nastavit časový interval mezi snímky.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.9\textwidth]{../../img/multi_cam_settings}
+            \caption{Tabulka pro nastavení multispektrální kamery}
+            \label{fig:multi_cam_settings}
+        \end{figure}
+
+        \subsection{Akustická emise}\label{subsec:akusticka-emise}
+
+        U zařízení na zaznamenávání akustických emisí je k dispozici nastavení formátu nápětí, exportního módu a formátu energie.
+        Volitelně můžeme také exportovat napětí akustické emise jako \textit{decibel scale} (dBAE).
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.95\textwidth]{../../img/ae_settings}
+            \caption{Tabulka pro nastavení akustické emise}
+            \label{fig:ae_settings}
+        \end{figure}
+
+        \subsection{Zahájení měření}\label{subsec:zahajeni-mereni}
+
+        Měření se zahajuje na domovské stránce.
+        Postup je následující:
+
+        \begin{enumerate}
+            \item Klikněte na tlačítko „MEASURE“, které se nachází v pravém horním rohu stránky (obrázek 5)
+            \begin{figure}[hbt!]
+                \centering
+                \includegraphics[width=0.32\textwidth]{../../img/measure_one_time_button}
+                \caption{Tlačítko pro měření}
+                \label{fig:measure_one_time}
+            \end{figure}
+            \item Z nabídky vyberte první variantu „One time measurement“
+            \item V dialogovém okně uveďte název měření, popis a zvolte vhodný čas
+            \item Můžete tady změnit nastavení senzorů, které se aplkují pouze na toto měření.
+            Jinak se použije výchozí (viz začatek sekce 4 Nastavení senzorů)
+            \begin{figure}[hbt!]
+                  \centering
+                  \includegraphics[width=0.95\textwidth]{../../img/one_time_measure_dialog}
+                  \caption{Dialogové okno}
+                  \label{fig:one_time_measure_dialog}
+            \end{figure}
+            \item Měření zahájíte kliknutím na tlačítko „START MEASUREMENT“ (na konci dialogu)
+        \end{enumerate}
+
+        Proces konfigurace periodického měření je podobný, pouze s tím rozdílem, že je třeba zvolit dva termíny.
+        Pokud se měření nepodaří vytvořit, na konci dialogového okna bude zobrazeno upozornění.
+
+
+
+        \subsection{Stahování dat}\label{subsec:stahovani-dat}
+
+        Data k měření je možné stáhnout na hlavní stránce aplikace kliknutím na ikonu pro stažení u požadovaného záznamu.
+
+        \begin{figure}[hbt!]
+            \centering
+            \includegraphics[width=0.25\textwidth]{../../img/download_icon}
+            \caption{Ikona pro stažení dat}
+            \label{fig:dowload_icon}
+        \end{figure}
+
+    \end{teamwork}
+\end{document}

@@ -1,0 +1,11 @@
+\babel@toc {czech}{}\relax 
+\contentsline {section}{\numberline {1}Úvod}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Architektura}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Použité technologie}{1}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Lokální vývoj}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Databáze}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Backend}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Frontend}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Nastavení environmentálních proměnných}{4}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}docker-compose}{4}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}LabVIEW}{5}{subsection.2.6}%
