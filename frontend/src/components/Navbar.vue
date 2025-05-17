@@ -1,34 +1,25 @@
 <template>
   <nav>
     <v-app-bar flat color="dark-green">
-      
-      <v-app-bar-title class="mx-2 hidden-md-and-down">
-        <span class="font-weight-bold nav_element">Acoustic</span>
-        <span class="nav_element">Emission</span>
+
+      <v-app-bar-title class="mx-4 hidden-md-and-down">
+        <h1 class="text-h5 font-weight-bold nav_element">
+          <router-link :to="{'name': 'measurement-list'}">
+            SOAD System
+          </router-link>
+        </h1>
       </v-app-bar-title>
 
       <v-spacer></v-spacer>
 
       <div class="hidden-sm-and-down d-flex">
-        <v-btn :to="{ name: 'home' }" class="mr-2">
+        <v-btn :to="{ name: 'measurement-list' }" class="mr-2 text-caption">
           <span class="nav_element">Measurements</span>
         </v-btn>
-        <v-btn :to="{ name: 'config' }" class="mx-2">
-          <span class="nav_element">Configuration</span>
+        <v-btn :to="{ name: 'sensor-settings' }" class="mx-2 text-caption">
+          <span class="nav_element">Sensor settings</span>
         </v-btn>
       </div>
-         
-      
-      <v-switch 
-        color="black" 
-        v-model="mode" 
-        value="test" 
-        @change="changeMode" 
-        class="mr-4" 
-        hide-details 
-        label="Test mode" 
-        inset
-      ></v-switch>
 
       <v-menu anchor="bottom end" v-model="userMenuShown">
         <template v-slot:activator="{ props }">
@@ -45,9 +36,8 @@
 </template>
 
 <script>
-import { useUserStore } from '@/store/UserStore';
-import { useModeStore} from "@/store/ModeStore";
-import { mapStores } from 'pinia';
+import {useUserStore} from '@/store/UserStore';
+import {mapStores} from 'pinia';
 
 export default {
   name: 'Navbar',
@@ -55,38 +45,34 @@ export default {
   data() {
     return {
       userMenuShown: false,
-      mode: ""
     };
-  },
-
-  created() {
-    this.mode = useModeStore().getMode
   },
 
   computed: {
     ...mapStores(useUserStore),
-    ...mapStores(useModeStore),
 
     isAuthenticated() {
       return useUserStore().isAuthenticated;
     },
-
-
   },
 
   methods: {
     logout() {
       useUserStore().logout();
-      this.$router.push({ name: 'landing' });
+      this.$router.push({name: 'login'});
       this.userMenuShown = false;
-    },
-
-    changeMode() {
-      useModeStore().setMode(this.mode === "test" ? "test" : "production");
-
     }
   },
 };
 </script>
 
-<style></style>
+<style>
+.nav_element {
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  line-height: 27px;
+  color: #323232;
+  text-transform: capitalize;
+  font-weight: normal;
+}
+</style>

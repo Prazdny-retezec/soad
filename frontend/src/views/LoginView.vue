@@ -1,39 +1,63 @@
 <template>
-  <div class="ma-4 pa-4">
-    <v-card class="mx-auto my-8" variant="tonal" height="400px" width="420px" color="card_color-darken-4" rounded="xl"
-            style="display:flex; flex-direction:column">
-      <v-form class="mx-4" v-model="formValid" lazy-validation ref="form" align="center" justify="center">
-        <v-text-field
-            class="mt-10"
-            label="Username"
-            v-model="username"
-            :rules="[rules.required]"
-        ></v-text-field>
-        <v-text-field
-            class="my-2"
-            label="Password"
-            v-model="password"
-            type="password"
-            :rules="[rules.required]"
-        ></v-text-field>
-        <v-btn @click="login()" color="dark-green" class="mb-8">Log me in</v-btn>
-      </v-form>
+  <v-container fluid fill-height class="ma-0 pa-0">
+    <div class="fullscreen-image pt-16">
+      <v-row align="center" justify="center" fill-height class="mt-20">
+        <!-- Empty Column -->
+        <v-col cols="6"></v-col>
 
-      <br>
-      <!-- <div align="center" justify="center">
-        Don't have an account?<br>
-        <v-btn class="mt-1" rounded="xl" flat variant="outlined" color="dark-green" :to="{name: 'signin'}">Create new account</v-btn>
-      </div> -->
-    </v-card>
-  </div>
+        <!-- Title Column -->
+        <v-col cols="6">
+          <div class="landing_page_title">
+            <span>SOAD </span><br>
+            <span class="pl-8">system</span>
+          </div>
+
+          <div align="center" class="mt-10 mr-16">
+            <!-- Login form -->
+            <v-card class="mx-auto my-8 translucent-card" variant="tonal" rounded="xl" elevation="12"
+              style="display: flex; flex-direction: column; height: 100%; max-height: 600px; width: 420px;">
+              
+              <v-form v-model="formValid" lazy-validation ref="form" class="pa-6" style="flex: 1; display: flex; flex-direction: column;">
+                <v-text-field
+                  label="Username"
+                  v-model="username"
+                  :rules="[rules.required]"
+                  outlined
+                  dense
+                  color="white"
+                  class="mb-4"
+                ></v-text-field>
+
+                <v-text-field
+                  label="Password"
+                  v-model="password"
+                  type="password"
+                  :rules="[rules.required]"
+                  outlined
+                  dense
+                  color="white"
+                  class="mb-6"
+                ></v-text-field>
+
+                <v-spacer></v-spacer>
+
+                <v-btn @click="login()" color="dark-green" block>Log me in</v-btn>
+              </v-form>
+            </v-card>
+          </div>
+        </v-col>
+      </v-row>
+    </div>
+  </v-container>
 </template>
 
 <script>
+import Config from "@/config";
 import { mapStores } from "pinia";
 import { useUserStore } from "@/store/UserStore";
 
 export default {
-  name: "LoginView",
+  name: 'LoginView',
 
   data() {
     return {
@@ -51,36 +75,92 @@ export default {
   },
 
   methods: {
-  // async login(){
-  //   await this.$refs.form.validate();
-  //   if (!this.formValid) return;
-
-  //   await useUserStore().login(this.username, this.password)
-
-  //   if (!useUserStore().error) {
-  //     this.$router.push(useUserStore().afterLoginRoute ?? {name: 'home'})
-  //     useUserStore().setAfterLoginRoute(null)
-  //   }
-  // }
-  login() {
-      
-      // this.$refs.form.validate();
-      // if (!this.formValid) return;
-
-      const envUsername = import.meta.env.VITE_ADMIN_USERNAME;
-      const envPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-      console.log(envPassword, envUsername)
-      console.log(this.username, this.password)
-      if (this.username === envUsername && this.password === envPassword) {
+    login() {
+      if (this.username === Config.username && this.password === Config.password) {
         this.userStore.login();
-        this.$router.push({ name: 'home' });
+        this.$router.push({ name: 'measurement-list' });
       } else {
         alert("Invalid credentials");
       }
     },
   }
-}
+};
 </script>
 
 <style scoped>
+.fullscreen-image {
+  position: relative;
+  height: 100vh;
+  background-image: url('@/assets/loading_image.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Přidání tmavého overlay přes pozadí */
+.fullscreen-image::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 0;
+}
+
+.v-row, .v-col, .landing_page_title, .v-card, .v-form {
+  position: relative;
+  z-index: 1;
+}
+
+/* Nadpis */
+.landing_page_title {
+  font-family: "Outfit", sans-serif;
+  font-size: 90px;
+  text-transform: capitalize;
+  color: #FAFFF3;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 2px #323232;
+}
+
+/* Malý padding vlevo u druhého řádku nadpisu */
+.pl-8 {
+  padding-left: 0.5rem;
+}
+
+/* Průhledná šedá karta - méně světlá, více průhledná */
+.translucent-card {
+  background-color: rgba(200, 200, 200, 0.15) !important; /* méně intenzivní než předtím */
+  color: #f0f0f0;
+}
+
+.v-input input {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important; /* čistě bílý text */
+  caret-color: #fff !important; /* bílý kurzor */
+  border-radius: 4px;
+  padding-left: 8px;
+}
+
+/* Labely světlejší a výraznější */
+.v-input .v-label {
+  color: #eee !important;
+  font-weight: 500;
+}
+
+/* Placeholder text světlejší */
+.v-input input::placeholder {
+  color: #ddd !important;
+  opacity: 1;
+}
+
+/* Rámeček vstupních polí */
+.v-input.v-input--is-focused .v-input__control {
+  border-color: #80d8ff !important; /* světle modrý rámeček při focusu */
+  box-shadow: 0 0 5px #80d8ff !important;
+}
+
+.v-input:not(.v-input--is-focused) .v-input__control {
+  border-color: #ccc !important; /* světle šedý rámeček */
+}
+
 </style>
