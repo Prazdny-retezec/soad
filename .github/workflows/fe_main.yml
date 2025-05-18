@@ -1,0 +1,48 @@
+name: Test & Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+     
+    - name: Install and build frontend
+      working-directory: ./frontend/dist
+      run: |
+        npm ci
+        npm run build
+
+    - name: Build JAR
+      run: |
+        ./gradlew :server:clean
+        ./gradlew :server:bootJar
+
+    - name: Rename JAR
+      run: |
+        mv build/libs/server*.jar build/libs/app.jar
+
+    # předpis pro nasazení na server
+    #- name: Upload to a server via SCP and start frontend
+    #  if: success()
+    #  run: |
+    #    navázání ssh spojení na server
+    #    zkopírování app.jar na server
+    #    restart služby
