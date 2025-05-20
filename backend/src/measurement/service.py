@@ -108,6 +108,7 @@ class MeasurementService:
                                               ae_delta=dto.ae_delta, duration=dto.duration, sensor_settings=dto.sensor_settings)
             measurements.append(self.create_measurement(single_dto))
             current_time += dto.duration
+            current_time += dto.period
 
         return measurements
 
@@ -116,11 +117,6 @@ class MeasurementService:
 
         measurement.name = dto.name
         measurement.description = dto.description
-
-        if dto.sensor_settings is not None:
-            measurement.sensor_settings = dto.sensor_settings.to_entity()
-        else:
-            pass
 
         measurement = self.__save_measurement(measurement)
         return measurement
@@ -292,7 +288,7 @@ class MeasurementService:
             gdrive_url = upload_zip_file(
                 gdrive_service=gdrive_service,
                 path_to_local_zip_file=zip_file_name,
-                gdrive_file_name=measurement.name
+                gdrive_file_name=zip_file_name
             )
 
             logging.info(f"Finishing measurement {measurement_id}")

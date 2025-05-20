@@ -2,14 +2,14 @@
   <v-dialog max-width="700" v-model="dialog">
     <template v-slot:activator="{ props: activatorProps }">
       <div v-bind="activatorProps">
-        <span v-if="type === 'schedule'">Periodic Schedule</span>
+        <span v-if="type === 'schedule'">Periodic schedule</span>
         <span v-else>One-time measurement</span>
       </div>
     </template>
 
     <template v-slot:default="{ isActive }">
-      <!-- ONE-TIME SCHEDULING -->
-      <v-card title="Create one-time measurement" rounded="xl" class="text-center">
+      <v-card :title="props.type === 'schedule' ? 'Create periodic schedule' : 'Create one-time measurement'"
+              rounded="xl" class="text-center">
         <!-- Name -->
         <v-row justify="center" class="mb-0 px-4">
           <v-text-field v-model="name" label="Name" variant="outlined" class="w-100"/>
@@ -22,51 +22,113 @@
 
         <!-- Duration-->
         <v-row justify="start">
-          <v-col cols="12" class="px-4">
-            <div class="text-left text-subtitle-1 mb-5">Duration</div>
+          <v-col cols="12">
+            <h3 class="text-left mb-5">Duration</h3>
             <duration-picker v-model="duration"/>
           </v-col>
         </v-row>
 
         <!-- Planning checkbox -->
-        <v-row justify="start" class="mb-2 px-4">
-          <v-checkbox
-              v-model="planningEnabled"
-              label="Plan this measurement"
-              color="dark-green"
-              hide-details
-          ></v-checkbox>
-        </v-row>
+        <template v-if="props.type !== 'schedule'">
+          <v-row justify="start" class="mb-2 px-4">
+            <v-checkbox
+                v-model="planningEnabled"
+                label="Plan this measurement"
+                color="dark-green"
+                hide-details
+            ></v-checkbox>
+          </v-row>
+        </template>
 
         <!-- Conditional Planning fields -->
-        <template v-if="planningEnabled">
-          <v-row justify="center">
-            <v-col cols="6">
-              <v-date-input
-                  v-model="selectedDate"
-                  label="Planned at date"
-                  :prepend-icon="null"
-                  variant="outlined"
-                  :hide-actions="true"
-                  clearable>
-              </v-date-input>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                  v-model="selectedTime"
-                  label="Planned at time"
-                  type="time"
-                  step="60"
-                  variant="outlined"
-                  clearable>
-              </v-text-field>
-            </v-col>
-          </v-row>
+        <template v-if="(props.type === 'schedule') || planningEnabled">
+          <template v-if="props.type === 'schedule'">
+            <!-- Periodic planning inputs -->
+            <h3 class="text-left mb-5">Plan from</h3>
+            <v-row justify="center">
+              <v-col cols="6">
+                <v-date-input
+                    v-model="selectedDateFrom"
+                    label="Plan from (date)"
+                    :prepend-icon="null"
+                    variant="outlined"
+                    :hide-actions="true"
+                    clearable>
+                </v-date-input>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                    v-model="selectedTimeFrom"
+                    label="Plan from (time)"
+                    type="time"
+                    step="60"
+                    variant="outlined"
+                    clearable>
+                </v-text-field>
+              </v-col>
+            </v-row>
 
-          <!-- AE delta-->
+            <h3 class="text-left mb-5">Plan to</h3>
+            <v-row justify="center">
+              <v-col cols="6">
+                <v-date-input
+                    v-model="selectedDateTo"
+                    label="Plan to (date)"
+                    :prepend-icon="null"
+                    variant="outlined"
+                    :hide-actions="true"
+                    clearable>
+                </v-date-input>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                    v-model="selectedTimeTo"
+                    label="Plan to (time)"
+                    type="time"
+                    step="60"
+                    variant="outlined"
+                    clearable>
+                </v-text-field>
+              </v-col>
+            </v-row>
+
+            <v-row justify="start">
+              <v-col cols="12" class="px-4">
+                <h3 class="text-left mb-5">Period</h3>
+                <duration-picker v-model="period"/>
+              </v-col>
+            </v-row>
+          </template>
+          <template v-else>
+            <h3 class="text-left mb-5">Plan at</h3>
+            <v-row justify="center">
+              <v-col cols="6">
+                <v-date-input
+                    v-model="selectedDate"
+                    label="Plan at (date)"
+                    :prepend-icon="null"
+                    variant="outlined"
+                    :hide-actions="true"
+                    clearable>
+                </v-date-input>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                    v-model="selectedTime"
+                    label="Plan at (time)"
+                    type="time"
+                    step="60"
+                    variant="outlined"
+                    clearable>
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </template>
+
+          <!-- AE delta (common for both modes) -->
           <v-row justify="start">
             <v-col cols="12" class="px-4">
-              <div class="text-left text-subtitle-1 mb-5">AE delta</div>
+              <h3 class="text-left mb-5">AE delta</h3>
               <duration-picker v-model="aeDelta"/>
             </v-col>
           </v-row>
@@ -87,24 +149,18 @@
           <!-- RGB Camera Section -->
           <section class="settings-section">
             <h3>RGB Camera</h3>
-            <v-text-field v-model.number="sensorSettings.rgb_image_quality" label="RGB Image Quality" type="number"
-                          min="1" max="100"/>
-            <v-text-field v-model.number="sensorSettings.rgb_image_count" label="RGB Image Count" type="number"
-                          min="1"/>
-            <v-text-field v-model.number="sensorSettings.rgb_image_width" label="RGB Image Width" type="number"
-                          min="1"/>
-            <v-text-field v-model.number="sensorSettings.rgb_image_height" label="RGB Image Height" type="number"
-                          min="1"/>
-            <v-text-field v-model.number="sensorSettings.rgb_sampling_delay" label="RGB Sampling Delay (sec)"
-                          type="number" min="0"/>
+            <v-text-field v-model.number="sensorSettings.rgb_image_quality" label="RGB Image Quality" type="number" min="1" max="100"/>
+            <v-text-field v-model.number="sensorSettings.rgb_image_count" label="RGB Image Count" type="number" min="1"/>
+            <v-text-field v-model.number="sensorSettings.rgb_image_width" label="RGB Image Width" type="number" min="1"/>
+            <v-text-field v-model.number="sensorSettings.rgb_image_height" label="RGB Image Height" type="number" min="1"/>
+            <v-text-field v-model.number="sensorSettings.rgb_sampling_delay" label="RGB Sampling Delay (sec)" type="number" min="0"/>
           </section>
 
           <!-- Multispectral Camera Section -->
           <section class="settings-section">
             <h3>Multispectral Camera</h3>
             <v-text-field v-model.number="sensorSettings.ms_image_count" label="MS Image Count" type="number" min="1"/>
-            <v-text-field v-model.number="sensorSettings.ms_sampling_delay" label="MS Sampling Delay (sec)"
-                          type="number" min="0"/>
+            <v-text-field v-model.number="sensorSettings.ms_sampling_delay" label="MS Sampling Delay (sec)" type="number" min="0"/>
           </section>
 
           <!-- Acoustic Emission Section -->
@@ -120,7 +176,7 @@
 
         <!-- Start Button -->
         <v-row justify="center" class="mb-4 px-4">
-          <v-btn color="dark-green" rounded="xl" class="my-4" @click="createOneTimeMeasurement">
+          <v-btn color="dark-green" rounded="xl" class="my-4" @click="createMeasurement">
             Add measurement
           </v-btn>
         </v-row>
@@ -136,10 +192,11 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, onMounted, watch} from 'vue';
+import {ref, reactive, onMounted, watch} from 'vue';
 import DurationPicker from '@/components/DurationPicker.vue';
 import {useMeasurementStore} from '@/store/MeasurementStore';
 import {useSensorSettingsStore} from "@/store/SensorSettingsStore";
+import {combineDateTime} from '@/util/DatetimeUtil';
 
 // Props
 const props = defineProps({
@@ -163,6 +220,7 @@ const useDefaultSensorSettings = ref(true);
 
 const duration = ref('PT1M');
 const aeDelta = ref('PT5S');
+const period = ref('PT1H')
 
 const selectedDateFrom = ref(null);
 const selectedTimeFrom = ref(null);
@@ -175,11 +233,6 @@ const selectedTime = ref(null);
 const showAlert = ref(false);
 const errorMessage = ref('');
 const isLoading = ref(false);
-
-// Pravidla validace
-const rules = {
-  required: (value) => !!value || 'Required.',
-};
 
 // Sensor settings
 const sensorSettings = reactive({
@@ -199,10 +252,6 @@ const sensorSettings = reactive({
   ae_counts_lin: 1,
   ae_energy_format: 1
 });
-
-function openDialog() {
-  dialog.value = true;
-}
 
 function closeDialog() {
   dialog.value = false;
@@ -227,27 +276,6 @@ function resetForm() {
   isLoading.value = false;
 }
 
-function combineDateTime(date, time) {
-  if (!date || !time) return null;
-
-  const [hours, minutes] = time.split(':').map(Number);
-
-  const d = new Date(date);
-  d.setHours(hours);
-  d.setMinutes(minutes);
-  d.setSeconds(0);
-  d.setMilliseconds(0);
-
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  const s = String(d.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${h}:${m}:${s}`;
-}
-
 function loadSensorDefaultsFromStore() {
   Object.assign(sensorSettings, {
     rgb_image_quality: sensorSettingsStore.rgbImageQuality,
@@ -265,7 +293,7 @@ function loadSensorDefaultsFromStore() {
   });
 }
 
-async function createOneTimeMeasurement() {
+async function createMeasurement() {
   showAlert.value = false;
   errorMessage.value = '';
 
@@ -275,22 +303,52 @@ async function createOneTimeMeasurement() {
     return;
   }
 
-  const plannedAtISO = combineDateTime(selectedDate.value, selectedTime.value);
-
-  const dto = {
+  const common = {
     name: name.value,
     description: description.value,
-    plan_at: plannedAtISO,
     duration: duration.value,
     ae_delta: aeDelta.value,
     sensor_settings: sensorSettings
   };
 
+  let dto;
+
   try {
-    await measurementStore.createMeasurement(dto);
-    emit('submitted')
+    if (props.type === 'schedule') {
+      const planFrom = combineDateTime(selectedDateFrom.value, selectedTimeFrom.value);
+      const planTo = combineDateTime(selectedDateTo.value, selectedTimeTo.value);
+
+      if (!planFrom || !planTo || !period.value) {
+        showAlert.value = true;
+        errorMessage.value = 'Plan from, to, and period must be specified';
+        return;
+      }
+
+      dto = {
+        ...common,
+        plan_from: planFrom,
+        plan_to: planTo,
+        period: period.value
+      };
+
+      await measurementStore.createPeriodicMeasurement(dto);
+    } else {
+      // One-time
+      const planAt = planningEnabled.value
+          ? combineDateTime(selectedDate.value, selectedTime.value)
+          : null;
+
+      dto = {
+        ...common,
+        plan_at: planAt
+      };
+
+      await measurementStore.createMeasurement(dto);
+    }
+
+    emit('submitted');
     closeDialog();
-  } catch (error) {
+  } catch {
     showAlert.value = true;
     errorMessage.value = measurementStore.error || 'Unknown error';
   }

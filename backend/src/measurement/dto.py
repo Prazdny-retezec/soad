@@ -25,10 +25,11 @@ class MeasurementCreateDto(BaseModel):
 class MeasurementCreatePeriodicDto(BaseModel):
     name: str
     description: str
-    plan_from: datetime | None = None
-    plan_to: datetime | None = None
+    plan_from: datetime
+    plan_to: datetime
     duration: timedelta = timedelta(minutes=10)
     ae_delta: timedelta = timedelta(minutes=3)
+    period: timedelta = timedelta(hours=1)
     sensor_settings: SensorSettingsDto = SensorSettingsDto()
 
     class Config:
@@ -38,7 +39,6 @@ class MeasurementCreatePeriodicDto(BaseModel):
 class MeasurementUpdateDto(BaseModel):
     name: str
     description: str
-    sensor_settings: SensorSettingsDto = SensorSettingsDto()
 
 
 class MeasurementDetailDto(BaseModel):
