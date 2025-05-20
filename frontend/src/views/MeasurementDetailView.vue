@@ -61,7 +61,7 @@
         <v-list lines="two">
           <v-list-item title="Result">
             <file-download-card v-if="detail.result != null"
-                                :filename="detail.name + '.zip'"
+                                :filename="detail.id + '.zip'"
                                 :url="detail.result.cloud_url"/>
           </v-list-item>
         </v-list>
