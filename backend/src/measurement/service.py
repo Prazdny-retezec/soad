@@ -108,6 +108,7 @@ class MeasurementService:
                                               ae_delta=dto.ae_delta, duration=dto.duration, sensor_settings=dto.sensor_settings)
             measurements.append(self.create_measurement(single_dto))
             current_time += dto.duration
+            current_time += dto.period
 
         return measurements
 
