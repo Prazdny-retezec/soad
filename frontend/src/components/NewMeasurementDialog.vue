@@ -136,10 +136,11 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, onMounted, watch} from 'vue';
+import {ref, reactive, onMounted, watch} from 'vue';
 import DurationPicker from '@/components/DurationPicker.vue';
 import {useMeasurementStore} from '@/store/MeasurementStore';
 import {useSensorSettingsStore} from "@/store/SensorSettingsStore";
+import { combineDateTime } from '@/util/DatetimeUtil';
 
 // Props
 const props = defineProps({
@@ -176,11 +177,6 @@ const showAlert = ref(false);
 const errorMessage = ref('');
 const isLoading = ref(false);
 
-// Pravidla validace
-const rules = {
-  required: (value) => !!value || 'Required.',
-};
-
 // Sensor settings
 const sensorSettings = reactive({
   rgb_image_quality: 90,
@@ -199,10 +195,6 @@ const sensorSettings = reactive({
   ae_counts_lin: 1,
   ae_energy_format: 1
 });
-
-function openDialog() {
-  dialog.value = true;
-}
 
 function closeDialog() {
   dialog.value = false;
@@ -225,27 +217,6 @@ function resetForm() {
   showAlert.value = false;
   errorMessage.value = '';
   isLoading.value = false;
-}
-
-function combineDateTime(date, time) {
-  if (!date || !time) return null;
-
-  const [hours, minutes] = time.split(':').map(Number);
-
-  const d = new Date(date);
-  d.setHours(hours);
-  d.setMinutes(minutes);
-  d.setSeconds(0);
-  d.setMilliseconds(0);
-
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  const s = String(d.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${h}:${m}:${s}`;
 }
 
 function loadSensorDefaultsFromStore() {

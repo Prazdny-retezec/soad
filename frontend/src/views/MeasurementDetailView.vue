@@ -5,6 +5,21 @@
       <v-col cols="auto">
         <h1 class="text-h5">Measurement info - {{ detail.id }}</h1>
       </v-col>
+      <v-col cols="auto">
+        <v-btn v-if="detail.state === 'NEW'" color="primary" @click="openPlanDialog">
+          Plan
+        </v-btn>
+        <v-btn v-if="detail.state === 'PLANNED'" color="warning" @click="unplanMeasurement(detail.id)">
+          Unplan
+        </v-btn>
+        <v-btn v-if="!isEditing" color="grey-darken-1" class="ms-3" @click="startEditing">
+          Edit
+        </v-btn>
+        <template v-if="isEditing">
+          <v-btn color="success" @click="submitUpdate" class="ms-3 me-3">Save</v-btn>
+          <v-btn color="error" @click="cancelEditing">Cancel</v-btn>
+        </template>
+      </v-col>
     </v-row>
 
     <!-- Informace o měření -->
@@ -12,8 +27,18 @@
       <!-- Sloupec 1: Name, Description, State -->
       <v-col cols="12" md="4">
         <v-list lines="two">
-          <v-list-item title="Name" :subtitle="detail.name"/>
-          <v-list-item title="Description" :subtitle="detail.description"/>
+          <v-list-item title="Name">
+            <template #subtitle>
+              <div v-if="!isEditing">{{ detail.name }}</div>
+              <v-text-field v-else v-model="editedName" dense hide-details/>
+            </template>
+          </v-list-item>
+          <v-list-item title="Description">
+            <template #subtitle>
+              <div v-if="!isEditing">{{ detail.description }}</div>
+              <v-textarea v-else v-model="editedDescription" rows="2" dense hide-details/>
+            </template>
+          </v-list-item>
           <v-list-item title="State">
             <state-chip :state="detail.state"/>
           </v-list-item>
@@ -82,6 +107,12 @@
       </v-col>
     </v-row>
   </v-container>
+
+  <plan-measurement-dialog
+      v-model="planDialog"
+      @submit="handlePlanSubmit"
+      @close="planDialog = false"
+  />
 </template>
 
 <script setup>
@@ -91,7 +122,7 @@ import Config from '@/config';
 import {useRoute} from 'vue-router';
 import StateChip from "@/components/StateChip.vue";
 import FileDownloadCard from "@/components/FileDownloadCard.vue";
-import {de} from "vuetify/locale";
+import PlanMeasurementDialog from '@/components/PlanMeasurementDialog.vue';
 
 // Refs & state
 const route = useRoute()
@@ -117,19 +148,23 @@ onMounted(async () => {
 
 // Functions
 const loadDetail = async () => {
-  detail.value = await measurementStore.getMeasurement(measurementId.value);
-  if (detail.value?.sensor_settings) {
-    Object.assign(editedSensorSettings, detail.value.sensor_settings);
+  try {
+    const data = await measurementStore.getMeasurement(measurementId.value);
+    if (!data) {
+      alert('Not found');
+      return;
+    }
+    detail.value = data;
+    if (data.sensor_settings) {
+      Object.assign(editedSensorSettings, data.sensor_settings);
+    }
+  } catch (error) {
+    console.error('Chyba při načítání detailu:', error);
   }
 };
 
 const formatDate = (dateString) => {
   return dateString ? new Date(dateString).toLocaleString() : 'N/A';
-};
-
-const handleDownload = (id) => {
-  const link = `${Config.backendUrl}/measurement/${id}/download`;
-  window.open(link);
 };
 
 const startEditing = () => {
@@ -149,18 +184,15 @@ const cancelEditing = () => {
 const submitUpdate = async () => {
   const dto = {
     name: editedName.value,
-    description: editedDescription.value,
-    sensor_settings: {...editedSensorSettings},
+    description: editedDescription.value
   };
 
   try {
     await measurementStore.updateMeasurement(detail.value.id, dto);
     await loadDetail();
     isEditing.value = false;
-    alert('Measurement updated successfully.');
   } catch (error) {
     console.error('Error:', error);
-    alert('Error updating measurement.');
   }
 };
 
@@ -168,35 +200,12 @@ const openPlanDialog = () => {
   planDialog.value = true;
 };
 
-const submitPlan = async () => {
-  if (!selectedDateFrom.value || !selectedTimeFrom.value) {
-    alert('Please select both date and time.');
-    return;
-  }
-
-  const planDate = new Date(selectedDateFrom.value);
-  const [hours, minutes] = selectedTimeFrom.value.split(':');
-  planDate.setHours(parseInt(hours));
-  planDate.setMinutes(parseInt(minutes));
-  planDate.setSeconds(0);
-
-  let aeDeltaPrefix = 'P';
-  const aeDeltaUnitChar = aeDeltaUnit.value.charAt(0);
-  if (['H', 'M', 'S'].includes(aeDeltaUnitChar)) aeDeltaPrefix = 'PT';
-
-  const dto = {
-    plan_at: planDate.toISOString(),
-    ae_delta: `${aeDeltaPrefix}${aeDeltaValue.value}${aeDeltaUnitChar}`,
-  };
-
+const handlePlanSubmit = async ({plan_at, ae_delta}) => {
   try {
-    await measurementStore.planMeasurement(detail.value.id, dto.plan_at, dto.ae_delta);
+    await measurementStore.planMeasurement(detail.value.id, plan_at, ae_delta);
     await loadDetail();
-    planDialog.value = false;
-    alert('Measurement successfully planned.');
   } catch (error) {
-    console.error('Error:', error);
-    alert('Error planning measurement.');
+    console.error('Chyba při plánování:', error);
   }
 };
 

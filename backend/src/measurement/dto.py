@@ -38,7 +38,6 @@ class MeasurementCreatePeriodicDto(BaseModel):
 class MeasurementUpdateDto(BaseModel):
     name: str
     description: str
-    sensor_settings: SensorSettingsDto = SensorSettingsDto()
 
 
 class MeasurementDetailDto(BaseModel):
