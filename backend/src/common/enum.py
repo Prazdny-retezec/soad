@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, Enum
 
 
 class ImageFormat(StrEnum):
@@ -7,3 +7,7 @@ class ImageFormat(StrEnum):
     TIFF = "TIFF"
     PNG = "PNG"
     RAW = "RAW"
+
+class OrderDir(str, Enum):
+    asc = "asc"
+    desc = "desc"

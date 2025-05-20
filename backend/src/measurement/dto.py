@@ -38,6 +38,7 @@ class MeasurementCreatePeriodicDto(BaseModel):
 class MeasurementUpdateDto(BaseModel):
     name: str
     description: str
+    sensor_settings: SensorSettingsDto = SensorSettingsDto()
 
 
 class MeasurementDetailDto(BaseModel):
@@ -55,12 +56,16 @@ class MeasurementDetailDto(BaseModel):
     result: MeasurementResultDto | None = None
     sensor_settings: SensorSettingsDto
 
+    class Config:
+        from_attributes = True
+
 
 class MeasurementListDto(BaseModel):
     id: int
     name: str
     description: str | None
     created_at: datetime
+    updated_at: datetime | None
     planned_at: datetime | None = None
     state: MeasurementState
     duration: timedelta

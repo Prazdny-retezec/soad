@@ -37,23 +37,9 @@ export default {
 
 
 <style>
-.nav_element {
-  font-family: "Outfit", sans-serif;
-  font-size: 24px;
-  line-height: 27px;
+a, a:hover, a:visited {
+  text-decoration: none;
   color: #323232;
-  text-transform: capitalize;
-  font-weight: normal;
-}
-
-.landing_page_title {
-  font-family: "Outfit", sans-serif;
-  font-size: 90px;
-  text-transform: capitalize;
-  color:#FAFFF3;
-  font-weight: bold;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 2px #323232;
 }
 
 .body_text {
