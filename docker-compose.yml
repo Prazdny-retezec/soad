@@ -6,7 +6,7 @@ services:
       dockerfile: .Dockerfile
       args:
         VITE_ADMIN_USERNAME: admin
-        VITE_ADMIN_PASSWORD: admin
+        VITE_ADMIN_PASSWORD: changeit
         VITE_API_URL: http://localhost:5001
     container_name: soad-fe
     environment:
@@ -34,6 +34,8 @@ services:
       - MOCK_ACOUSTIC_EMISSION=True
       - MOCK_RGB_CAMERA=True
       - MOCK_MULTI_SPECTRAL_CAMERA=True
+      - AUTH_USER=admin
+      - AUTH_PASSWORD=changeit
     ports:
       - "5001:80"
     volumes:

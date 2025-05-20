@@ -9,13 +9,14 @@ from test_fixture import client_fixture, db_session_fixture, prepopulate_db, \
 from time_machine import TimeMachineFixture
 from sqlalchemy.orm import Session
 
+AUTH = ("api", "changeit")
 
 def test_list_measurements(client: TestClient, session: Session):
     # given
     prepopulate_db(dt(2018, 10, 5, 10, 0, 0), session)
 
     # when
-    response = client.get("/measurement")
+    response = client.get("/measurement", auth=AUTH)
 
     # then
     data = response.json()
@@ -30,7 +31,7 @@ def test_get_detail_measurement(time_machine: TimeMachineFixture, client: TestCl
     prepopulate_db(dt(2018, 10, 5, 10, 0, 0), session)
 
     # when
-    response = client.get("/measurement/1")
+    response = client.get("/measurement/1", auth=AUTH)
 
     # then
     data = response.json()
@@ -50,7 +51,7 @@ def test_get_detail_non_existing_measurement(time_machine: TimeMachineFixture, c
     prepopulate_db(dt(2018, 10, 5, 10, 0, 0), session)
 
     # when
-    response = client.get("/measurement/558")
+    response = client.get("/measurement/558", auth=AUTH)
 
     # then
     assert response.status_code == 404
@@ -69,7 +70,7 @@ def test_create_measurement(time_machine: TimeMachineFixture, client: TestClient
     }
 
     # when
-    response = client.post("/measurement", json=request)
+    response = client.post("/measurement", json=request, auth=AUTH)
 
     # then
     data = response.json()
@@ -95,7 +96,7 @@ def test_create_planned_measurement(time_machine: TimeMachineFixture, client: Te
     }
 
     # when
-    client.post("/measurement", json=request)
+    client.post("/measurement", json=request, auth=AUTH)
 
     # then
     result = session.query(Measurement).filter(Measurement.id == 1).first()
@@ -121,7 +122,7 @@ def test_create_periodic_planned_measurement(time_machine: TimeMachineFixture, c
         "ae_delta": "PT1M",
         "sensor_settings": sensor_settings
     }
-    client.post("/measurement/periodic", json=request)
+    client.post("/measurement/periodic", json=request, auth=AUTH)
 
     # then
     result = session.query(Measurement).all()
@@ -144,7 +145,7 @@ def test_update_measurement(time_machine: TimeMachineFixture, client: TestClient
         "name": "updating",
         "description": "updating",
     }
-    response = client.put("/measurement/1", json=request)
+    response = client.put("/measurement/1", json=request, auth=AUTH)
 
     data = response.json()
     assert response.status_code == 202
@@ -160,7 +161,7 @@ def test_update_non_existing_measurement(time_machine: TimeMachineFixture, clien
         "name": "updating",
         "description": "updating",
     }
-    response = client.put("/measurement/42", json=request)
+    response = client.put("/measurement/42", json=request, auth=AUTH)
 
     # then
     assert response.status_code == 404
@@ -172,7 +173,7 @@ def test_delete_measurement(time_machine: TimeMachineFixture, client: TestClient
     prepopulate_db(dt(2018, 10, 5, 10, 0, 0), session)
 
     # when
-    response = client.delete("/measurement/1")
+    response = client.delete("/measurement/1", auth=AUTH)
 
     # then
     assert response.status_code == 204
@@ -182,7 +183,7 @@ def test_delete_non_existing_measurement(client: TestClient):
     # given
 
     # when
-    response = client.delete("/measurement/42")
+    response = client.delete("/measurement/42", auth=AUTH)
 
     # then
     assert response.status_code == 204
@@ -198,7 +199,7 @@ def test_plan_measurement(time_machine: TimeMachineFixture, client: TestClient, 
         "plan_at": "2018-10-23T12:00:00.000",
         "ae_delta": "PT3M"
     }
-    response = client.post("/measurement/1/plan", json=request)
+    response = client.post("/measurement/1/plan", json=request, auth=AUTH)
 
     # then
     assert response.status_code == 200
@@ -213,7 +214,7 @@ def test_unplan_measurement(time_machine: TimeMachineFixture, client: TestClient
     prepopulate_db(dt(2018, 10, 23, 9, 0, 0), session)
 
     # when
-    response = client.delete("/measurement/2/plan")
+    response = client.delete("/measurement/2/plan", auth=AUTH)
 
     # then
     assert response.status_code == 200

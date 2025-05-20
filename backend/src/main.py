@@ -1,13 +1,14 @@
 import os
 
-from fastapi import FastAPI
-
-from measurement.router import router as measurement_router
-from labview.router import router as labview_router
-from database import Base, engine
-from scheduler import scheduler
-from settings import AppSettings
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+
+from database import Base, engine
+from labview.router import router as labview_router
+from measurement.router import router as measurement_router
+from scheduler import scheduler
+from security import require_basic_auth
+from settings import AppSettings
 
 description = """
 Systém SOAD slouží k synchronizaci a správě obrazových a akustických dat. 🚀
@@ -59,7 +60,7 @@ app.add_middleware(
 )
 
 # registration of routers
-app.include_router(measurement_router)
+app.include_router(measurement_router, dependencies=[Depends(require_basic_auth)])
 app.include_router(labview_router)
 
 
@@ -75,6 +76,7 @@ def on_startup():
     if not os.path.exists(settings.output_dir):
         os.mkdir(settings.output_dir)
 
+    print(f"[DEBUG] AUTH_USER={settings.auth_user!r}, AUTH_PASSWORD={settings.auth_password!r}")
     # start task scheduler
     scheduler.start()
 
