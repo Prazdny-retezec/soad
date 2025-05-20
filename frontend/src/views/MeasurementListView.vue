@@ -112,7 +112,7 @@ const stateOptions = [
 // pagination
 const pagination = ref({
   page: 1,
-  itemsPerPage: 20,
+  itemsPerPage: 10,
   sortBy: [],
 })
 const totalItems = ref(0)

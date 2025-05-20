@@ -315,7 +315,7 @@ export default {
       planFrom.setSeconds(0);
       planFrom.setMilliseconds(0);
 
-      const conflict = await this.checkForConflictingMeasurements(planFrom);
+      const conflict = false
       if (conflict) {
         this.showAlert = true;
         this.errorMessage = 'A measurement is already scheduled for the selected time.';

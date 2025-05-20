@@ -4,6 +4,7 @@ import {createPinia} from 'pinia'
 import SensorSettingsView from "@/views/SensorSettingsView.vue";
 import MeasurementListView from "@/views/MeasurementListView.vue";
 import {useUserStore} from "@/store/UserStore";
+import MeasurementDetailView from "@/views/MeasurementDetailView.vue";
 
 export const pinia = createPinia()
 
@@ -19,6 +20,11 @@ const routes = [
         name: 'measurement-list',
         component: MeasurementListView,
         meta: {requiresAuth: true}
+    },
+    {
+        path: '/measurement/:id',
+        name: 'MeasurementDetail',
+        component: MeasurementDetailView,
     },
     {
         path: '/sensor-settings',
