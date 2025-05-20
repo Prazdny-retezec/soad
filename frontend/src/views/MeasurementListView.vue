@@ -132,6 +132,7 @@ const snackbar = ref({
 const headers = [
   {title: 'Name', key: 'name'},
   {title: 'Created At', key: 'created_at', value: (measurement) => formatDate(measurement.created_at)},
+  {title: 'Updated At', key: 'updated_at', value: (measurement) => formatDate(measurement.updated_at)},
   {title: 'Planned At', key: 'planned_at', value: (measurement) => formatDate(measurement.planned_at)},
   {title: 'State', key: 'state'},
   {title: 'Download', key: 'download', align: 'end', sortable: false},
@@ -185,6 +186,9 @@ async function handleOptionsChange(options) {
 }
 
 function formatDate(dateString) {
+  if (dateString == null) {
+    return "-"
+  }
   return new Date(dateString).toLocaleString();
 }
 

@@ -65,6 +65,7 @@ class MeasurementListDto(BaseModel):
     name: str
     description: str | None
     created_at: datetime
+    updated_at: datetime | None
     planned_at: datetime | None = None
     state: MeasurementState
     duration: timedelta

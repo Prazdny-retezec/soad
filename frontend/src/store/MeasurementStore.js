@@ -56,15 +56,15 @@ export const useMeasurementStore = defineStore('measurement', {
         },
 
         async createMeasurement(dto) {
-
             this.error = null;
             this.isLoading = true;
             try {
                 const {data} = await api.post('/measurement', dto);
                 this.measurements.push(data);
                 return data;
-            } catch {
-                this.error = 'Cannot create measurement';
+            } catch (error) {
+                this.error = error.response?.data?.message || error.message || 'Cannot create measurement';
+                throw error;
             } finally {
                 this.isLoading = false;
             }
