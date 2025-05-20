@@ -2,6 +2,7 @@
 import {defineStore} from 'pinia';
 import api from '@/services/api.js'
 import config from '@/config';
+import axios from "axios";
 
 
 export const useMeasurementStore = defineStore('measurement', {
