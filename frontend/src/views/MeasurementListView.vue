@@ -26,10 +26,10 @@
           </template>
           <v-list>
             <v-list-item>
-              <new-measurement-dialog type="now"/>
+              <new-measurement-dialog type="now" @submitted="onMeasurementSubmitted"/>
             </v-list-item>
             <v-list-item>
-              <new-measurement-dialog type="schedule"/>
+              <new-measurement-dialog type="schedule" @submitted="onMeasurementSubmitted"/>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -183,6 +183,14 @@ async function handleOptionsChange(options) {
   }
 
   await measurementStore.loadAll(listingParams)
+}
+
+function onMeasurementSubmitted() {
+  snackbar.value.text = 'Measurement successfully created';
+  snackbar.value.color = 'success';
+  snackbar.value.show = true;
+
+  refreshTable();
 }
 
 function formatDate(dateString) {

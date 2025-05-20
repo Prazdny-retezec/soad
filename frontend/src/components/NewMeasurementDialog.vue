@@ -146,6 +146,9 @@ const props = defineProps({
   type: String,
 });
 
+// emit
+const emit = defineEmits(['submitted'])
+
 // Store
 const measurementStore = useMeasurementStore();
 const sensorSettingsStore = useSensorSettingsStore()
@@ -285,6 +288,7 @@ async function createOneTimeMeasurement() {
 
   try {
     await measurementStore.createMeasurement(dto);
+    emit('submitted')
     closeDialog();
   } catch (error) {
     showAlert.value = true;
