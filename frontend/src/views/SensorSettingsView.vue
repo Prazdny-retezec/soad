@@ -195,62 +195,67 @@
   </v-container>
 </template>
 
-<script>
-export default {
-  name: "SensorSettingsView",
-  data() {
-    return {
-      activeTab: 'rgbCamera',
-      rgbImagesCount: 10,
-      rgbSamplingDelay: 30,
-      rgbWidth: 1920,
-      rgbHeight: 1080,
-      rgbImageQuality: 90,
-      imageFormats: [
-        {text: 'TIFF', value: 'TIFF'},
-        {text: 'PNG', value: 'PNG'},
-        {text: 'RAW', value: 'RAW'},
-      ],
-      selectedImageFormat: {text: 'PNG', value: 'PNG'},
-      msImagesCount: 2,
-      msSamplingDelay: 30,
-      voltageFormats: [
-        {text: 'not exported', value: 0},
-        {text: 'nano Volts', value: 1},
-        {text: 'micro Volts (integer)', value: 2},
-        {text: 'micro Volts (float)', value: 3},
-        {text: 'milli Volts', value: 4},
-        {text: 'Volts', value: 5},
-      ],
-      selectedVoltageFormat: {text: 'Volts', value: 5},
-      aeCountsLog: 1,
-      aeCountsLin: 0,
-      aeExportMode: 'log',
-      aeVoltageDbae: false,
-      energyFormats: [
-        {text: 'V^2/Hz', value: 0},
-        {text: 'uV^2/Hz', value: 1},
-      ],
-      selectedEnergyFormat: {text: 'uV^2/Hz', value: 1},
-      formValid: true,
-      rules: {
-        required: value => !!value || 'Required.',
-        numberFormat: value => /^\d+(\.\d+)?$/.test(value) || 'Invalid number format'
-      },
-    }
-  },
-  watch: {
-    aeExportMode(newVal) {
-      if (newVal === 'log') {
-        this.ae_counts_log = 1
-        this.ae_counts_lin = 0
-      } else {
-        this.ae_counts_log = 0
-        this.ae_counts_lin = 1
-      }
-    }
+<script setup>
+import {computed, onMounted, ref, watch} from 'vue';
+import {useSensorSettingsStore} from "@/store/SensorSettingsStore";
+import {storeToRefs} from 'pinia';
+
+const sensorSettingsStore = useSensorSettingsStore();
+
+const activeTab = ref('rgbCamera');
+
+const {
+  rgbImagesCount,
+  rgbSamplingDelay,
+  rgbWidth,
+  rgbHeight,
+  rgbImageQuality,
+  selectedImageFormat,
+  msImagesCount,
+  msSamplingDelay,
+  selectedVoltageFormat,
+  aeExportMode,
+  aeCountsLog,
+  aeCountsLin,
+  aeVoltageDbae,
+  selectedEnergyFormat,
+} = storeToRefs(sensorSettingsStore);
+
+const imageFormats = [
+  {text: 'TIFF', value: 'TIFF'},
+  {text: 'PNG', value: 'PNG'},
+  {text: 'RAW', value: 'RAW'},
+];
+
+const voltageFormats = [
+  {text: 'not exported', value: 0},
+  {text: 'nano Volts', value: 1},
+  {text: 'micro Volts (integer)', value: 2},
+  {text: 'micro Volts (float)', value: 3},
+  {text: 'milli Volts', value: 4},
+  {text: 'Volts', value: 5},
+];
+
+const energyFormats = [
+  {text: 'V^2/Hz', value: 0},
+  {text: 'uV^2/Hz', value: 1},
+];
+
+// Validace
+const rules = {
+  required: value => !!value || 'Required.',
+  numberFormat: value => /^\d+(\.\d+)?$/.test(value) || 'Invalid number format',
+};
+
+watch(aeExportMode, (newVal) => {
+  if (newVal === 'log') {
+    aeCountsLog.value = 1;
+    aeCountsLin.value = 0;
+  } else {
+    aeCountsLog.value = 0;
+    aeCountsLin.value = 1;
   }
-}
+});
 </script>
 
 <style>
