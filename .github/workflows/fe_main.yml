@@ -1,4 +1,4 @@
-name: Test & Deploy
+name: Test & Deploy Frontend
 
 on:
   push:
@@ -10,39 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-     
-    - name: Install and build frontend
-      working-directory: frontend
-      run: |
-        npm ci
-        npm run build
+      - name: Install dependencies & run tests
+        working-directory: frontend
+        run: |
+          yarn install --frozen-lockfile
+          yarn test
 
-    - name: Build JAR
-      run: |
-        ./gradlew :server:clean
-        ./gradlew :server:bootJar
+      - name: Build production bundle
+        working-directory: frontend
+        run: |
+          yarn build
 
-    - name: Rename JAR
-      run: |
-        mv build/libs/server*.jar build/libs/app.jar
+      - name: Prepare artifacts
+        run: |
+          mkdir -p deploy
+          cp -R frontend/dist/* deploy/
 
-    # předpis pro nasazení na server
-    #- name: Upload to a server via SCP and start frontend
-    #  if: success()
-    #  run: |
-    #    navázání ssh spojení na server
-    #    zkopírování app.jar na server
-    #    restart služby
+      #- name: Deploy to server via SCP
+      #  if: success()
+      #  run: |
+      #    ssh user@your-server.com "mkdir -p /var/www/app"
+      #    scp -r deploy/* user@your-server.com:/var/www/app/
+      #    ssh user@your-server.com "sudo systemctl restart your-frontend-service"
