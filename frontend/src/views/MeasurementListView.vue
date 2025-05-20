@@ -189,7 +189,11 @@ function formatDate(dateString) {
 }
 
 function refreshTable() {
-  measurementStore.loadAll();
+  handleOptionsChange({
+    page: pagination.value.page,
+    itemsPerPage: pagination.value.itemsPerPage,
+    sortBy: pagination.value.sortBy,
+  })
 }
 
 onMounted(() => {
@@ -197,11 +201,7 @@ onMounted(() => {
 });
 
 watch(selectedState, () => {
-  handleOptionsChange({
-    page: pagination.value.page,
-    itemsPerPage: pagination.value.itemsPerPage,
-    sortBy: pagination.value.sortBy,
-  })
+  refreshTable()
 })
 </script>
 
