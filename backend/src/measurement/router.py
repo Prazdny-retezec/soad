@@ -8,11 +8,10 @@ from measurement.service import MeasurementService
 from fastapi import APIRouter, Depends
 from datetime import datetime
 
-
 router = APIRouter(
     prefix="/measurement",
-    tags=["Measurement"]
-    )
+    tags=["Measurement"],
+)
 
 
 @router.get(
