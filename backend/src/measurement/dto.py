@@ -56,6 +56,9 @@ class MeasurementDetailDto(BaseModel):
     result: MeasurementResultDto | None = None
     sensor_settings: SensorSettingsDto
 
+    class Config:
+        from_attributes = True
+
 
 class MeasurementListDto(BaseModel):
     id: int

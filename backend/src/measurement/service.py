@@ -11,6 +11,7 @@ from typing import List
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, HTTPException
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
 from controllers import get_acoustic_emission_controller, get_rgb_camera_controller, get_ms_camera_controller
@@ -50,14 +51,29 @@ class MeasurementService:
         else:
             return entity
 
-    def list_measurements(self) -> List[Measurement]:
-        query = (self.db
-                 .query(Measurement)
-                 .filter(Measurement.deleted_at.is_(None))
-                 .order_by(Measurement.planned_at.asc())
-        )
+    def list_measurements(self, state, date, page, page_size, order_by, order_dir) -> List[Measurement]:
+        query = (self.db.query(Measurement))
 
-        measurements = query.all()
+        # filter
+        if state:
+            query = query.where(Measurement.state == state)
+        if date:
+            query = query.where(Measurement.planned_at == date)
+
+        query = query.where(Measurement.deleted_at.is_(None))
+
+        # order
+        if order_by and hasattr(Measurement, order_by):
+            if order_dir == "desc":
+                query = query.order_by(desc(order_by))
+            else:
+                query = query.order_by(asc(order_by))
+
+        # paging
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
+
+        measurements = self.db.execute(query).scalars().all()
         return measurements
 
     def create_measurement(self, dto: MeasurementCreateDto) -> Measurement:

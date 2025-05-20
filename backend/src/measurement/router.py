@@ -1,9 +1,12 @@
-from typing import List
+from typing import List, Optional
 import logging
 from fastapi import APIRouter, status, Depends
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
+
+from common.enum import OrderDir
 from measurement.dto import MeasurementCreateDto, MeasurementUpdateDto, MeasurementListDto, MeasurementDetailDto, \
     MeasurementCreatePeriodicDto, MeasurementPlanDto
+from measurement.model import MeasurementState
 from measurement.service import MeasurementService
 from fastapi import APIRouter, Depends
 from datetime import datetime
@@ -17,12 +20,19 @@ router = APIRouter(
 @router.get(
     path="",
     summary="Získat seznam měření",
-    description="Vrací seznam všech uložených měření."
+    description="Vrací seznam všech uložených měření.",
+    response_model=list[MeasurementListDto]
 )
 async def list_measurements(
+        state: Optional[MeasurementState] = None,
+        date: Optional[datetime] = None,
+        page: int = Query(default=1, ge=1),
+        page_size: int = Query(default=20),
+        order_by: Optional[str] = Query(default=None),
+        order_dir: OrderDir = Query(OrderDir.desc),
         service: MeasurementService = Depends(MeasurementService)
-) -> List[MeasurementListDto]:
-    return service.list_measurements()
+):
+    return service.list_measurements(state, date, page, page_size, order_by, order_dir)
 
 
 @router.get(
