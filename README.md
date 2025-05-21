@@ -1,4 +1,4 @@
-# soad
+# SOAD
 
 Cílem tohoto projektu je vytvořit řešení pro synchronizaci, ukládání a zálohování dat z kamerových a akustických senzorů. 
 Projekt se zaměřuje na vývoj systému, který umožní efektivní sběr, zpracování a správu dat z těchto senzorů. Jedná se tedy
@@ -30,6 +30,10 @@ Další použité technologie:
 
 - [Programátorská příručka](docs/cz/programmer/tex/out/main.pdf)
 - [Uživatelský manuál](docs/cz/user/tex/out/main.pdf)
+
+## Nasazení
+- [BE](https://soad.onrender.com) (Cloud BE je zdarma a po určité době se uspí, při otevření bude třeba několikrát obnovit stránku)
+- [FE](http://mchoster.alwaysdata.net/)
 
 ## Autoři
 
