@@ -25,6 +25,8 @@ from google_drive.gdrive_handler import gdrive_auth, upload_zip_file
 from settings import AppSettings
 from zipper import create_zip_archive
 
+logger = logging.getLogger("uvicorn")
+
 
 class MeasurementService:
     def __init__(self, db: Session = Depends(get_db), scheduler: AsyncIOScheduler = Depends(get_scheduler)):
@@ -121,7 +123,6 @@ class MeasurementService:
         measurement = self.__save_measurement(measurement)
         return measurement
 
-
     def delete_measurement(self, measurement_id: int):
         query = (self.db
             .query(Measurement)
@@ -143,7 +144,7 @@ class MeasurementService:
                 self.scheduler.remove_job(measurement.scheduler_job_id)
                 measurement.scheduler_job_id = None
             except JobLookupError as e:
-                logging.warning(e)
+                logger.warning(e)
 
         # soft delete
         measurement.deleted_at = datetime.now()
@@ -184,9 +185,9 @@ class MeasurementService:
             # save updated measurement
             measurement = self.__save_measurement(measurement)
 
-            logging.info(f"Planned execution of measurement at {plan_at}")
+            logger.info(f"Planned execution of measurement at {plan_at}")
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             measurement.state = MeasurementState.ERROR
             measurement = self.__save_measurement(measurement)
 
@@ -228,14 +229,14 @@ class MeasurementService:
 
             return mes
 
-        logging.info(f"Starting measurement for {measurement_id}")
+        logger.info(f"Starting measurement for {measurement_id}")
         measurement = db.query(Measurement).filter(Measurement.id == measurement_id).first()
 
         if measurement is None or measurement.state != MeasurementState.PLANNED:
-            logging.warn(f"Missing measurement with id: {measurement_id}")
+            logger.warning(f"Missing measurement with id: {measurement_id}")
             return
 
-        logging.info(f"Downloading for measurement {measurement_id}")
+        logger.info(f"Downloading for measurement {measurement_id}")
         measurement.started_at = datetime.now()
         measurement = change_state(measurement, MeasurementState.DOWNLOADING)
 
@@ -273,7 +274,7 @@ class MeasurementService:
             ms_thread.join()
 
             # zip produced data files
-            logging.info(f"Zipping measurement {measurement_id}")
+            logger.info(f"Zipping measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.ZIPPING)
 
             files_to_zip = glob.glob(app_settings.output_dir + "/*")
@@ -281,7 +282,7 @@ class MeasurementService:
             create_zip_archive(files_to_zip, zip_file_name)
 
             # upload zipped files to google drive
-            logging.info(f"Uploading measurement {measurement_id}")
+            logger.info(f"Uploading measurement {measurement_id}")
             measurement = change_state(measurement, MeasurementState.UPLOADING)
 
             gdrive_service = gdrive_auth()
@@ -291,7 +292,7 @@ class MeasurementService:
                 gdrive_file_name=zip_file_name
             )
 
-            logging.info(f"Finishing measurement {measurement_id}")
+            logger.info(f"Finishing measurement {measurement_id}")
             measurement.result = MeasurementResult(
                 cloud_url=gdrive_url,
                 measurement_id=measurement_id
@@ -303,7 +304,7 @@ class MeasurementService:
             clear_data_dir()
 
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             measurement.result = MeasurementResult(error=str(e), measurement_id=measurement_id)
             change_state(measurement, MeasurementState.ERROR)
         finally:
@@ -328,19 +329,24 @@ class MeasurementService:
 
 def acoustic_emission_measuring(ae_delta: timedelta, duration: timedelta):
     with get_acoustic_emission_controller() as acoustic_emission:
+        logger.info("Configuring AE")
         # TODO emission.configure() -> SensorSettings
         acoustic_emission.configure("TODO")
 
+        logger.info("Starting AE measurement (ae delta start)")
         # beginning of acoustic emission collection (before cameras)
         acoustic_emission.start_recording(str(uuid.uuid4()), 0)
         time.sleep(ae_delta.seconds)
 
+        logger.info("Continuing AE measurement (duration)")
         # measuring itself
         time.sleep(duration.seconds)
 
+        logger.info("Finishing AE measurement (ae delta end)")
         # end of acoustic emission measuring (after cameras)
         time.sleep(ae_delta.seconds)
 
+        logger.info("Writing measured values of AE")
         # saving measured data to csv file
         acoustic_emission.stop_recording()
 
@@ -349,11 +355,14 @@ def rgb_camera_measuring(sensors: SensorSettings):
     rgb_camera = get_rgb_camera_controller()
 
     # configure
+    logger.info("Configuring RGB camera")
     rgb_camera.configure_size(sensors.rgb_image_width, sensors.rgb_image_height)
 
     # proceed capturing
+    logger.info("Starting RGB measurement")
     with rgb_camera:
         for i in range(0, sensors.rgb_image_count):
+            logger.info("Captured RGB image %d", i)
             rgb_camera.capture_image(quality=sensors.rgb_image_quality, img_format=sensors.rgb_image_format)
             time.sleep(sensors.rgb_sampling_delay)
 
@@ -362,10 +371,12 @@ def ms_camera_measuring(sensors: SensorSettings):
     ms_camera = get_ms_camera_controller()
 
     for i in range(0, sensors.ms_image_count):
+        logger.info("Starting MS camera capturing of image %d", i)
         ms_camera.start_capturing()
         time.sleep(ms_camera.exposure_time + 1)
         ms_camera.stop_capturing()
 
+        logger.info("Stopped MS camera capturing, waiting in sampling delay")
         time.sleep(sensors.ms_sampling_delay)
 
 
@@ -374,4 +385,4 @@ def clear_data_dir():
     files_to_delete = glob.glob(app_settings.output_dir + "/*")
     for file in files_to_delete:
         os.remove(file)
-        logging.info(f"Deleted file: {file}")
+        logger.info(f"Deleted file: {file}")

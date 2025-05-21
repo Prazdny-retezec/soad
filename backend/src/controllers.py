@@ -9,6 +9,7 @@ from controller.rgb_camera import RgbCameraController
 from settings import AppSettings
 
 settings = AppSettings()
+logger = logging.getLogger("uvicorn")
 
 rgb_camera_controller = None
 ms_camera_controller = None
@@ -29,14 +30,14 @@ def get_acoustic_emission_controller() -> AcousticEmissionController:
 
 # RGB camera
 if settings.mock_rgb:
-    logging.warn("App is using mock data for RgbCameraController")
+    logger.warning("App is using mock data for RgbCameraController")
     rgb_camera_controller = RgbCameraMockController(settings.output_dir)
 else:
     rgb_camera_controller = RgbCameraController(settings.output_dir)
 
 # Acoustic emission
 if settings.mock_ae:
-    logging.warn("App is using mock data for AcousticEmissionController")
+    logger.warning("App is using mock data for AcousticEmissionController")
     acoustic_emission_controller = AcousticEmissionMockController(
         ip_address=settings.ae_ip_address,
         port=settings.ae_port,
@@ -51,7 +52,7 @@ else:
 
 # Multispectral camera
 if settings.mock_msc:
-    logging.warn("App is using mock data for MultiSpectralCameraController")
+    logger.warning("App is using mock data for MultiSpectralCameraController")
     ms_camera_controller = MultiSpectralCameraMockController(settings.output_dir, settings.msc_exposure_time)
 else:
     ms_camera_controller = MultiSpectralCameraController(settings.output_dir, settings.msc_exposure_time)

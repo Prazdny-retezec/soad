@@ -9,6 +9,7 @@ from settings import AppSettings
 
 engine = create_engine(url=AppSettings().database_url)
 sessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+logger = logging.getLogger("uvicorn")
 
 Base = declarative_base()
 
@@ -18,5 +19,5 @@ def get_db() -> Generator[Session, Any, None]:
     try:
         yield db
     finally:
-        logging.debug("Closing database connection")
+        logger.debug("Closing database connection")
         db.close()

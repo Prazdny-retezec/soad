@@ -1,4 +1,6 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +34,29 @@ You will be able to:
 * **Login** (_not implemented_).
 """
 
+
+# BE application lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = AppSettings()
+    logger = logging.getLogger("uvicorn")
+
+    # create database if not exists
+    create_db_and_tables()
+
+    #  check directory for saving data exists and create one if it does not
+    if not os.path.exists(settings.output_dir):
+        os.mkdir(settings.output_dir)
+
+    # log current auth user
+    logger.info(f"AUTH_USER={settings.auth_user!r}, AUTH_PASSWORD={settings.auth_password!r}")
+
+    # start task scheduler
+    scheduler.start()
+
+    yield
+
+
 # BE application instance
 app = FastAPI(
     title="Soad",
@@ -46,6 +71,7 @@ app = FastAPI(
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
     },
+    lifespan=lifespan
 )
 
 # CORS
@@ -62,23 +88,6 @@ app.add_middleware(
 # registration of routers
 app.include_router(measurement_router, dependencies=[Depends(require_basic_auth)])
 app.include_router(labview_router)
-
-
-# TODO replace by non-deprecated feature
-@app.on_event("startup")
-def on_startup():
-    settings = AppSettings()
-
-    # create database if not exists
-    create_db_and_tables()
-
-    #  check directory for saving data exists and create one if it does not
-    if not os.path.exists(settings.output_dir):
-        os.mkdir(settings.output_dir)
-
-    print(f"[DEBUG] AUTH_USER={settings.auth_user!r}, AUTH_PASSWORD={settings.auth_password!r}")
-    # start task scheduler
-    scheduler.start()
 
 
 def create_db_and_tables():
