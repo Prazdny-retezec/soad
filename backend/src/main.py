@@ -49,11 +49,11 @@ app = FastAPI(
 )
 
 # CORS
-origins = ["http://localhost:5000", "http://mchoster.alwaysdata.net/" ]
+origins = ["http://localhost:5000", "http://mchoster.alwaysdata.net"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # TODO remove this
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
